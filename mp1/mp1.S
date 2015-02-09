@@ -132,6 +132,10 @@ mp1_ioctl_add:
         cmpl $0, %eax   #test if the malloc worked
         je fail  # go to fail helper function if the malloc returned a null
 
+        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
+        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
+
+
         #now make a copy
         movl %eax, %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
         cmpl $0, %eax
@@ -150,9 +154,7 @@ mp1_ioctl_add:
         jne copy_fail #anything other than zero is a fail... /=0 is a fail
         #need to check location thing now (don't totally get this)
 
-        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
-        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
-
+        
         #we're good to go lets set the STATUS
         #using mov notes from page 20 of notes
         movw ON_LENGTH(%ebx), %dx # DX<-M[EDX+ON_LENGTH]
