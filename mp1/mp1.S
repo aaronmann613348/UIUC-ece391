@@ -75,22 +75,22 @@ first_loop:
         #becasue of loop again, this thing will loop through until it gets a zero countdown.
         #so, if it finally doesn't loop again we have countdown = 0
         #check the status on this bitch
-
+        movzwl LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
 
  check_status:
-        cmpw $0, STATUS(%ebx) #compare status bit to zero
-        je off
+        testw $0x1, STATUS(%ebx) #compare status bit to zero
+        jz off
 
         xorl %eax, %eax
         xorl %ecx, %ecx
 
-        movzwl LOCATION(%ebx), %eax # put location in eax
-        shll $1, %eax
+        
 
         #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
-        movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
+        #movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
         movw OFF_LENGTH(%ebx), %dx
         jmp done
        
@@ -106,7 +106,7 @@ off:
         
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
-        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+        #movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw ON_LENGTH(%ebx), %dx
        
       
