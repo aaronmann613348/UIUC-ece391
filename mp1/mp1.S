@@ -133,7 +133,7 @@ mp1_ioctl_add:
         je fail  # go to fail helper function if the malloc returned a null
 
         #now make a copy
-        movl -STRUCT_SIZE(%ebp), %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
+        movl %eax, %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
         cmpl $0, %eax
         je copy_fail
 
