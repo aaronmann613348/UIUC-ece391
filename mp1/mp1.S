@@ -377,39 +377,37 @@ mp1_ioctl_sync:
         movw STATUS(%esi), %ax
         movw %ax, STATUS(%edi)
 
-        movl LOCATION(%edi), %eax
-        shll $1, %eax
-        andb $0x1, STATUS(%edi)
-        movl %ebx, %ecx
 
-check_status_sync:
-        cmpw $0, STATUS(%edi) #compare status bit to zero
-        je sync_off
-        jne sync_on
+check_status:    
+        movw STATUS(%edi), %ecx
+        cmpw $1, %ecx
+        je sync_on
+        jne sync_off
+
+
+
+
+
 
 sync_on:
         xorl %eax, %eax
-        movl OFF_CHAR(%edi), %ecx #want OPPOSITE!
+        movb OFF_CHAR(%edi), %cl #want OPPOSITE!
         movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-        jmp loop_again_sync
+        jmp sync_worked
        
 
 sync_off:
       
         xorl %eax, %eax
-        movl ON_CHAR(%edi), %ebx #want OPPOSITE!
+        movb ON_CHAR(%edi), %cl #want OPPOSITE!
         movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
+        jmp sync_worked
         
         
-loop_again_sync:
-        movl NEXT(%ebx), %ebx #move to the next element on the list
-        jmp check_status_sync #then go back to the first loop
-
-
 
 
 sync_failed:
