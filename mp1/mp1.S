@@ -309,7 +309,7 @@ find_helper:
 
 mainloop:
         cmpl $0, %ebx #check for null
-        je find_loop_failed
+        je find_helper_failed
 
         cmpw %ax, LOCATION(%ebx)
         je find_helper_worked   
