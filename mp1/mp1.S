@@ -78,20 +78,19 @@ first_loop:
         #check the status!
         cmpw $0x0, STATUS(%ebx) #compare status bit to zero
         je off
-
-        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
-        call mp1_poke
-        movw OFF_LENGTH(%ebx), %dx
-        jmp done
+        jne on
         
 
 off:
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
         movw ON_LENGTH(%ebx), %dx
-        
-
        
+on: 
+        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
+        call mp1_poke
+        movw OFF_LENGTH(%ebx), %dx
+        jmp done
 
 done:
         movw %dx, COUNTDOWN(%ebx)
