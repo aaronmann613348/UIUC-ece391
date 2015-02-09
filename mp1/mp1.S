@@ -58,6 +58,10 @@ mp1_rtc_tasklet:
         pushl      %edi         #destination index
         pushl      %ebx         #preserve base
         movl mp1_list_head, %ebx #put the head of the list in ebx
+        cmpl $0, %ebx
+        je error
+
+
         #lets ride
 first_loop:
         #check base condition first
@@ -66,21 +70,26 @@ first_loop:
         #now we loop
         decw COUNTDOWN(%ebx) #first decrement the countdown
         cmpw $0, COUNTDOWN(%ebx) #check the countdown against zero
-        jg     loop_again #go to the next thing on the list and then loop again
+        je     loop_again #go to the next thing on the list and then loop again
 
         #becasue of loop again, this thing will loop through until it gets a zero countdown.
         #so, if it finally doesn't loop again we have countdown = 0
         #check the status on this bitch
 
-        movzwl LOCATION(%ebx), %eax # put location in eax
-        shll $1, %eax
 
-        #check the status!
-        cmpw $0x0, STATUS(%ebx) #compare status bit to zero
+ check_status:
+        cmpw $1, STATUS(%ebx) #compare status bit to zero
         je off
 
+        xorl %eax, %eax
+        xorl %ecx, %ecx
         #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
+
+
+        movw LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
+
         call mp1_poke
         movw $0x0, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw OFF_LENGTH(%ebx), %dx
@@ -93,6 +102,10 @@ loop_again:
 
 
 off:
+        xorl %eax, %eax
+        xorl %ecx, %ecx
+        movw LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
@@ -108,9 +121,10 @@ end:
         popl %ebx
         popl %edi
         popl %esi
-        popl %ebp
+        leave
         ret
-
+error:
+        movl $-1, %eax
 
 
 
