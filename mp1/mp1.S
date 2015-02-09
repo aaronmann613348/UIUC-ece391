@@ -137,6 +137,8 @@ mp1_ioctl_add:
         cmpl $0, %eax
         je copy_fail
 
+
+        pushl %eax
         #before we can call copy, we need to push on 3 things!
         pushl $STRUCT_SIZE #put size on stack
         pushl 8(%ebp) #copy over appropriate pointers for the struct
@@ -157,6 +159,8 @@ mp1_ioctl_add:
         movw %dx, COUNTDOWN(%ebx) # put on length in countdown!!!
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
 
+
+        popl %edx
         #now add this thing to the list head
         movl    mp1_list_head, %eax #hold head pointer
         movl    %eax, NEXT(%edx) #set next pointer
