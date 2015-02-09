@@ -302,7 +302,7 @@ find_helper:
         pushl     %ebp
         movl      %esp, %ebp 
         pushl %ebx #save that shit!
-        movw 8(%ebp) %ax
+        movw 8(%ebp), %ax
         movl mp1_list_head, %ebx #get a  pointer
         movl mp1_list_head, %ecx #hold the head
 
