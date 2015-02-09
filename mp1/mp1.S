@@ -95,10 +95,12 @@ mp1_ioctl:                                      #dispatcher
         movl    8(%esp), %eax                   #move stack pointer into our general purpose Register
 
 
+        cmpl    $3, %eax                       #compare to 3 
+        jg      invalid                              #greater, go to invalid
+
         cmpl    $0, %eax                       #compare it to 0
         jl      invalid                         #less than zero, go to invalid
-        cmpl    $4, %eax                       #compare to 4 
-        jg      invalid                              #greater, go to invalid
+        
 
 
         jmp     *function_table(, %eax, 4)       #jump to function table  
@@ -163,7 +165,7 @@ mp1_ioctl_add:
                                 #appropriate register parameters?
 
         movw LOCATION(%edx), %ax # put the correct offset in eax
-        shll %eax
+        shll $1, %eax
         movb ON_CHAR(%edx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
         call mp1_poke           #call this thing
         jmp success             #done
