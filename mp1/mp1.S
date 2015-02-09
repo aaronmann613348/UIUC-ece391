@@ -83,13 +83,12 @@ first_loop:
 
         xorl %eax, %eax
         xorl %ecx, %ecx
-        #default that status is 1
-        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
-
 
         movw LOCATION(%ebx), %ax # put location in eax
         shll $1, %eax
 
+        #default that status is 1
+        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
         movw $0x0, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw OFF_LENGTH(%ebx), %dx
@@ -104,8 +103,7 @@ loop_again:
 off:
         xorl %eax, %eax
         xorl %ecx, %ecx
-        movw LOCATION(%ebx), %ax # put location in eax
-        shll $1, %eax
+        
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
