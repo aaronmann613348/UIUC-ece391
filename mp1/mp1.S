@@ -79,25 +79,24 @@ first_loop:
         shll $1, %eax
 
  check_status:
-        compw $0, STATUS(%ebx) #compare status bit to zero
-        jne off
+        cmpw $0, STATUS(%ebx) #compare status bit to zero
+        je off
+        jne on
 
+on:
         xorl %eax, %eax
         xorl %ecx, %ecx
 
-        
-
-        #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
+        movzwl LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
         call mp1_poke
-        #movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
         movw OFF_LENGTH(%ebx), %dx
-        jmp done
+        movw %dx, COUNTDOWN(%ebx)
+        movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
+        jmp loop_again
        
 
-loop_again:
-        movl NEXT(%ebx), %ebx #move to the next element on the list
-        jmp first_loop #then go back to the first loop
 
 
 off:
@@ -105,15 +104,18 @@ off:
         xorl %ecx, %ecx
         
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
+         movzwl LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
         call mp1_poke
-        #movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
-        movw ON_LENGTH(%ebx), %dx
+         movw ON_LENGTH(%ebx), %dx
+         movw %dx, COUNTDOWN(%ebx)
+        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+        
+loop_again:
+        movl NEXT(%ebx), %ebx #move to the next element on the list
+        jmp first_loop #then go back to the first loop
        
       
-
-done:
-        movw %dx, COUNTDOWN(%ebx)
-        xorw $0x1, STATUS(%ebx) #clear
 
 end:
         popl %ebx
