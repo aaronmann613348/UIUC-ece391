@@ -160,19 +160,19 @@ mp1_ioctl_add:
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
 
         #changind d to b from here down
-        popl %ebx
+        popl %edx
         #now add this thing to the list head
         movl    mp1_list_head, %eax #hold head pointer
-        movl    %eax, NEXT(%ebx) #set next pointer
-        movl    %ebx, mp1_list_head #set new head
+        movl    %eax, NEXT(%edx) #set next pointer
+        movl    %edx, mp1_list_head #set new head
 
         #finally make poke call
 
                                 #appropriate register parameters?
 
-        movw LOCATION(%ebx), %ax # put the correct offset in eax
+        movw LOCATION(%edx), %ax # put the correct offset in eax
         shll $1, %eax
-        movb ON_CHAR(%ebx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
+        movb ON_CHAR(%edx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
         call mp1_poke           #call this thing
         jmp success             #done
 
