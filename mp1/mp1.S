@@ -240,7 +240,6 @@ success:
         jmp leave_helper
 
 
-
         
 mp1_ioctl_remove:
 	    pushl     %ebp                          #save old frame Pointer
@@ -268,7 +267,6 @@ found:
     movl %ecx, (%edx)
 
 
-
 free_allocated:
     pushl %eax
     call mp1_free
@@ -288,19 +286,6 @@ leave_remove:
     popl %esi
     leave
     ret
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         
@@ -442,20 +427,23 @@ check_status_sync:
         jne sync_off
 
 sync_on:
-        xorl %eax, %eax
+
         movb OFF_CHAR(%edi), %cl #want OPPOSITE!
+        xorl %eax, %eax
         movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
+        movw $0, STATUS(%edi)
         jmp sync_worked
        
 sync_off:
       
-        xorl %eax, %eax
         movb ON_CHAR(%edi), %cl #want OPPOSITE!
+        xorl %eax, %eax
         movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
+        movw $1, STATUS(%edi)
         jmp sync_worked
         
         
