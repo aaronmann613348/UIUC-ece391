@@ -192,6 +192,7 @@ leave_helper:
         ret    
 success:
         movl $0, %eax #return 0
+        jmp leave_helper
 
 
 
