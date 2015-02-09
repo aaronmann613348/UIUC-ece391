@@ -70,7 +70,7 @@ first_loop:
         #now we loop
         decw COUNTDOWN(%ebx) #first decrement the countdown
         cmpw $0, COUNTDOWN(%ebx) #check the countdown against zero
-        jne     loop_again #go to the next thing on the list and then loop again
+        jg     loop_again #go to the next thing on the list and then loop again
 
         #becasue of loop again, this thing will loop through until it gets a zero countdown.
         #so, if it finally doesn't loop again we have countdown = 0
