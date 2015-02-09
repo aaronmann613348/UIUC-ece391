@@ -384,7 +384,7 @@ mp1_ioctl_sync:
         andb $0x1, STATUS(%edi)
         movl %ebx, %ecx
 
-check_status:
+check_status_sync:
         cmpw $0, STATUS(%ebx) #compare status bit to zero
         je sync_off
         jne sync_on
@@ -400,7 +400,7 @@ sync_on:
         movw OFF_LENGTH(%ebx), %dx
         movw %dx, COUNTDOWN(%ebx)
         movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
-        jmp loop_again
+        jmp loop_again_sync
        
 
 
@@ -417,9 +417,9 @@ sync_off:
          movw %dx, COUNTDOWN(%ebx)
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
         
-loop_again:
+loop_again_sync:
         movl NEXT(%ebx), %ebx #move to the next element on the list
-        jmp first_loop #then go back to the first loop
+        jmp check_status_sync #then go back to the first loop
 
 
 
