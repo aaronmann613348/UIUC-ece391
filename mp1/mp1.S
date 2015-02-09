@@ -337,7 +337,6 @@ find_helper:
         pushl %ebx #save that shit!
         movw 8(%ebp), %ax
         movl mp1_list_head, %ebx #get a  pointer
-        movl mp1_list_head, %ecx #hold the head
 
 
 mainloop:
@@ -346,8 +345,8 @@ mainloop:
 
         cmpw %ax, LOCATION(%ebx)
         je find_helper_worked   
-        movl %ebx, %ecx #to set the new head
-
+        
+        movl %ebx, %ecx #save previous pointer
         movl NEXT(%ebx), %ebx #move to next on list
         jmp mainloop #keep looping
 
