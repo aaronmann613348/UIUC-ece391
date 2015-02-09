@@ -246,9 +246,124 @@ mp1_ioctl_remove:
 	ret
         
 mp1_ioctl_find:
-	ret
+        pushl     %ebp                          #save old frame Pointer
+        movl      %esp, %ebp                    #point to new frame
+        pushl      %esi         #source index
+        pushl      %edi         #destination index
+        pushl      %ebx         #preserve base
+
+        
+        movl 8(%ebp), %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
+        cmpl $0, %ebx
+        je find_failed
+
+        pushl %eax
+        call find_helper
+        addl $4, %esp
+        cmpl $0, %eax
+        je find_failed   
+       
+        
+        pushl $STRUCT_SIZE #put size on stack
+        pushl %eax
+        pushl %ebx
+        call mp1_copy_from_user #now call copy from user
+        addl $12, %esp
+        cmpl $0, %eax
+        je find_failed
+
+        
+
+        pushl $STRUCT_SIZE #put size on stack
+        pushl %eax #copy over appropriate pointers for the struct
+        pushl 8(%ebp) #copy over appropriate pointers for the struct
+        call mp1_copy_from_user #now call copy from user
+        addl $12, %esp
+        cmpl $0, %eax
+        je find_worked
+
+
+
+find_worked:
+        movl $0, %eax
+
+find_failed:
+        movl $-1, %eax
+        jmp leave_find
+leave_find:
+        popl %ebx
+        popl %edi
+        popl %esi
+        leave
+        ret
+
+
+find_helper:
+        pushl     %ebp
+        movl      %esp, %ebp 
+        pushl %ebx #save that shit!
+        movw 8(%ebp) %ax
+        movl mp1_list_head, %ebx #get a  pointer
+        movl mp1_list_head, %ecx #hold the head
+
+
+mainloop:
+        cmpl $0, %ebx #check for null
+        je find_loop_failed
+
+        cmpw %ax, LOCATION(%ebx)
+        je find_helper_worked   
+        movl %ebx, %ecx #to set the new head
+
+        movl NEXT(%ebx), %ebx #move to next on list
+        jmp mainloop #keep looping
+
+find_helper_worked:
+        movl %ebx, %eax
+
+find_helper_failed:
+        xorl %eax, %eax #clear
+        jmp leave_find_helper
+
+leave_find_helper:
+        popl %ebx #restore
+        leave
+        ret
+
+
+
+
+
+
+
+
+
 
 mp1_ioctl_sync:
-	ret
+
+        pushl     %ebp                          #save old frame Pointer
+        movl      %esp, %ebp                    #point to new frame
+        pushl      %esi         #source index
+        pushl      %edi         #destination index
+        pushl      %ebx         #preserve base
+
+        #lets get started
+
+sync_failed:
+        movl $-1, %eax
+        jmp done_with_sync
+
+sync_worked:
+        movl $0, %eax
+
+done_with_sync:
+        popl %ebx
+        popl %edi
+        popl %esi
+
+        leave
+        ret
+
+
 
 .end
