@@ -79,8 +79,8 @@ first_loop:
         shll $1, %eax
 
  check_status:
-        testw $0x1, STATUS(%ebx) #compare status bit to zero
-        jz off
+        compw $0, STATUS(%ebx) #compare status bit to zero
+        jne off
 
         xorl %eax, %eax
         xorl %ecx, %ecx
