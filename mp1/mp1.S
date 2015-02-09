@@ -256,13 +256,13 @@ mp1_ioctl_remove:
 
         movl mp1_list_head, %edx
 remove_loop:
-        cmpl %eax (%edx)
+        cmpl %eax, (%edx)
         je found
         movl (%edx), %edx
         movl NEXT(%edx), %edx
         jmp remove_loop
 
-        
+
 found:
     movl NEXT(%eax), %ecx
     movl %ecx, (%edx)
