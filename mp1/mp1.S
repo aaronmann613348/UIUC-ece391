@@ -84,7 +84,7 @@ first_loop:
         xorl %eax, %eax
         xorl %ecx, %ecx
 
-        movw LOCATION(%ebx), %ax # put location in eax
+        movzwl LOCATION(%ebx), %ax # put location in eax
         shll $1, %eax
 
         #default that status is 1
