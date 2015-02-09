@@ -52,7 +52,7 @@ mp1_poke:
 
 mp1_rtc_tasklet:
 	#start with same bull shit as add
-        pushl     %ebp                          #save old frame Pointer
+ /*       pushl     %ebp                          #save old frame Pointer
         movl      %esp, %ebp                    #point to new frame
         pushl      %esi         #source index
         pushl      %edi         #destination index
@@ -78,7 +78,8 @@ loop_again:
         movl NEXT(%ebx), %ebx #move to the next element on the list
         jmp first_loop #then go back to the first loop
 
-
+*/
+ret
 
 
 
