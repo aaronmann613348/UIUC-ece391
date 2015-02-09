@@ -348,6 +348,46 @@ mp1_ioctl_sync:
         pushl      %ebx         #preserve base
 
         #lets get started
+        movl 8(%ebp), %eax
+        shrl $16, %eax #split argument
+        pushl %eax
+        call find_helper
+        addl $4, %esp
+        cmpl $0, %eax
+        je sync_failed
+        movl %eax, %esi
+
+        movl 8(%ebp), %eax
+        andl $0xFFFF, %eax
+        pushl %eax
+        call find_helper
+        addl $4, %esp
+        cmpl $0, %eax
+        je sync_failed
+        movl %eax, %edi
+
+        movw ON_LENGTH(%esi), %ax
+        movw %ax, ON_LENGTH(%edi)
+        movw OFF_LENGTH(%esi), %ax
+        movw %ax, OFF_LENGTH(%edi)
+        movw COUNTDOWN(%esi), %ax
+        movw %ax, COUNTDOWN(%edi)
+        movw STATUS(%esi), %ax
+        movw %ax, STATUS(%edi)
+
+        movl LOCATION(%edi), %eax
+        shll $1, %eax
+        movl OFF_CHAR(%edi), %ecx
+        movl ON_CHAR(%edi), %ebx
+        andb $0x1, STATUS(%edi)
+        movl %ebx, %ecx
+
+        #done I thikns
+        call mp1_poke
+        jmp sync_worked
+
+
+
 
 sync_failed:
         movl $-1, %eax
