@@ -123,7 +123,7 @@ mp1_ioctl_add:
         pushl      %edi         #destination index
         pushl      %ebx         #preserve base
 
-
+        movl 8(%ebp), %eax
         cmpl $0, %eax
         je fail
         pushl           $STRUCT_SIZE    #push the size on
