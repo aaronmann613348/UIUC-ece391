@@ -77,7 +77,7 @@ first_loop:
 
         #check the status!
         cmpw $0x0, STATUS(%ebx) #compare status bit to zero
-        jne off
+        je off
 
         #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
