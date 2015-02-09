@@ -77,8 +77,8 @@ first_loop:
 
         #check the status!
         cmpw $0x0, STATUS(%ebx) #compare status bit to zero
-        je off
-        jne on
+        je on
+        jne off
         
 
 off:
