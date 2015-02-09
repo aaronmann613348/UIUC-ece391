@@ -155,9 +155,10 @@ mp1_ioctl_add:
 
         #we're good to go lets set the STATUS
         #using mov notes from page 20 of notes
-         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+
         movw ON_LENGTH(%ebx), %dx # DX<-M[EDX+ON_LENGTH]
         movw %dx, COUNTDOWN(%ebx) # put on length in countdown!!!
+         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
        
 
         #changind d to b from here down
@@ -171,7 +172,7 @@ mp1_ioctl_add:
 
                                 #appropriate register parameters?
 
-        movw LOCATION(%edx), %ax # put the correct offset in eax
+        movzwl LOCATION(%edx), %eax # put the correct offset in eax
         shll $1, %eax
         movb ON_CHAR(%edx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
         call mp1_poke           #call this thing
