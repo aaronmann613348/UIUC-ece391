@@ -155,9 +155,10 @@ mp1_ioctl_add:
 
         #we're good to go lets set the STATUS
         #using mov notes from page 20 of notes
+         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw ON_LENGTH(%ebx), %dx # DX<-M[EDX+ON_LENGTH]
         movw %dx, COUNTDOWN(%ebx) # put on length in countdown!!!
-        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+       
 
         #changind d to b from here down
         popl %edx
