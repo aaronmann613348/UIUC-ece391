@@ -18,6 +18,16 @@
 mp1_list_head:
         .long   0
 
+
+function_table:                 #required for the "dispatcher"
+
+        .long   mp1_ioctl_add      
+        .long   mp1_ioctl_remove
+        .long   mp1_ioctl_find      
+        .long   mp1_ioctl_sync
+              
+
+
 .text					# section declaration
 
 # Export the function symbol names
@@ -41,13 +51,136 @@ mp1_poke:
 	ret
 
 mp1_rtc_tasklet:
-	ret
+	#start with same bull shit as add
+        pushl     %ebp                          #save old frame Pointer
+        movl      %esp, %ebp                    #point to new frame
+        pushl      %esi         #source index
+        pushl      %edi         #destination index
+        pushl      %ebx         #preserve base
+        movl mp1_list_head, %ebx #put the head of the list in ebx
+        #lets ride
+first_loop:
+        #check base condition first
+        cmpl $0, %ebx   #check if the list is emtpy
+        je      end     #leave the program if the list is empty!
+        #now we loop
+        decw COUNTDOWN(%ebx) #first decrement the countdown
+        cmpw $0, COUNTDOWN(%ebx) #check the countdown against zero
+        jg     loop_again #go to the next thing on the list and then loop again
 
-mp1_ioctl:
-	ret
+        #becasue of loop again, this thing will loop through until it gets a zero countdown.
+        #so, if it finally doesn't loop again we have countdown = 0
+        #check the status on this bitch
+
+
+
+loop_again:
+        movl NEXT(%ebx), %ebx #move to the next element on the list
+        jmp first_loop #then go back to the first loop
+
+
+
+
+
+
+
+
+
+mp1_ioctl:                                      #dispatcher    
+                                
+                                                #writing this first
+                                                #gonna need a function table (jump table)
+                                                #put shit on stack
+
+        movl    8(%esp), %eax                   #move stack pointer into our general purpose Register
+
+
+        cmpl     %eax, $0                         #compare it to 0
+        jl      invalid                         #less than zero, go to invalid
+        cmpl     %eax , $4                        #compare to 4 
+        jg      invalid                              #greater, go to invalid
+
+
+        jmp     *function_table(, %eax, 4)       #jump to function table  
+
+	
+invalid: #invalid subroutine return -1
+        movl $-1, %eax                          #put -1 in eax
+        ret
+
 
 mp1_ioctl_add:
-	ret
+	
+        pushl     %ebp                          #save old frame Pointer
+        movl      %esp, %ebp                    #point to new frame
+        #got all that form page 24 of course notes
+        #I'm gonna also save the other Registers
+
+        pushl      %esi         #source index
+        pushl      %edi         #destination index
+        pushl      %ebx         #preserve base
+
+        pushl           $STRUCT_SIZE    #push the size on
+        call            mp1_malloc      #allocate the memory
+        addl $4, %esp 
+        cmpl $0, %eax   #test if the malloc worked
+        je fail  # go to fail helper function if the malloc returned a null
+
+        #now make a copy
+        movl -STRUCT_SIZE(%ebp), %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
+        #before we can call copy, we need to push on 3 things!
+        pushl $STRUCT_SIZE #put size on stack
+        pushl 8(%ebp) #copy over appropriate pointers for the struct
+        pushl %ebx #copy over appropriate pointers for the struct
+        call mp1_copy_from_user #now call copy from user
+        #check for failure
+        cmpl $0, %eax #anything other than zero is a fail
+        jne copy_fail #anything other than zero is a fail... /=0 is a fail
+        #need to check location thing now (don't totally get this)
+
+        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
+        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
+
+        #we're good to go lets set the STATUS
+        #using mov notes from page 20 of notes
+        movw ON_LENGTH(%ebx), %dl # DL<-M[EDX+ON_LENGTH]
+        movw %dl, COUNTDOWN(%ebx) # put on length in countdown!!!
+        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+
+        #now add this thing to the list head
+        movl    mp1_list_head, %eax #hold head pointer
+        movl    %eax, NEXT(%edx) #set next pointer
+        movl    %edx, mp1_list_head #set new head
+
+        #finally make poke call
+
+                                #appropriate register parameters?
+
+        movw LOCATION(%edx), %eax # put the correct offset in eax
+        shll %eax
+        movb ON_CHAR(%edx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
+        call mp1_poke           #call this thing
+        jmp success             #done
+
+copy_fail:
+        movl $-1, %eax #put -1 in for the return it it failed
+        call mp1_free   #this fail also needs to have a clear for the malloc
+        jmp leave_helper #leave helper pops everythig stored off 
+
+fail: 
+        movl $-1, %eax #put -1 in for the return it it failed
+        jmp leave_helper #leave helper pops everythig stored off 
+leave_helper:
+        popl %ebx       #pop off stored stuff 
+        popl %edi       #pop off stored stuff 
+        popl %esi      #pop off stored stuff   
+        leave 
+        ret    
+success:
+        movl $0, %eax #return 0
+
+
+
         
 mp1_ioctl_remove:
 	ret
