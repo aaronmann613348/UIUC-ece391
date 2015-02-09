@@ -90,7 +90,7 @@ first_loop:
         #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
-        movw $0x0, STATUS(%ebx) #put hex 1 into the STATUS spot
+        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw OFF_LENGTH(%ebx), %dx
         jmp done
        
@@ -106,7 +106,7 @@ off:
         
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
-        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+        movw $0x0, STATUS(%ebx) #put hex 1 into the STATUS spot
         movw ON_LENGTH(%ebx), %dx
        
       
