@@ -378,9 +378,9 @@ mp1_ioctl_sync:
         movw %ax, STATUS(%edi)
 
 
-check_status:    
-        movw STATUS(%edi), %ecx
-        cmpw $1, %ecx
+check_status_sync:    
+        movw STATUS(%edi), %cx
+        cmpw $1, %cx
         je sync_on
         jne sync_off
 
