@@ -135,7 +135,7 @@ mp1_ioctl_add:
         #now make a copy
         movl %eax, %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
         cmpl $0, %eax
-        je copy_fail
+        je fail
 
 
         pushl %eax
