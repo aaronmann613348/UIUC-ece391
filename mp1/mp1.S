@@ -87,7 +87,7 @@ first_loop:
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
 
 
-        movw LOCATION(%ebx), %eax # put location in eax
+        movw LOCATION(%ebx), %ax # put location in eax
         shll $1, %eax
 
         call mp1_poke
@@ -104,7 +104,7 @@ loop_again:
 off:
         xorl %eax, %eax
         xorl %ecx, %ecx
-        movw LOCATION(%ebx), %eax # put location in eax
+        movw LOCATION(%ebx), %ax # put location in eax
         shll $1, %eax
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
         call mp1_poke
