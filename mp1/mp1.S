@@ -52,7 +52,7 @@ mp1_poke:
 
 mp1_rtc_tasklet:
 	#start with same bull shit as add
- /*       pushl     %ebp                          #save old frame Pointer
+        pushl     %ebp                          #save old frame Pointer
         movl      %esp, %ebp                    #point to new frame
         pushl      %esi         #source index
         pushl      %edi         #destination index
@@ -72,13 +72,43 @@ first_loop:
         #so, if it finally doesn't loop again we have countdown = 0
         #check the status on this bitch
 
+        movzwl LOCATION(%ebx), %eax # put location in eax
+        shll $1, %eax
+
+        #check the status!
+        cmpw $0x0, STATUS(%ebx) #compare status bit to zero
+        je off
+        jne on
+
+off:
+        movb ON_CHAR(%ebx), %cl #want OPPOSITE!
+        call mp1_poke
+        movw ON_LENGTH(%ebx), %dx
+        jmp done
+on: 
+        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
+        call mp1_poke
+        movw OFF_LENGTH(%ebx), %dx
+        jmp done
+
+done:
+        movw %dx, COUNTDOWN(%ebx)
+        xorw $0x1, STATUS(%ebx)
+
+end:
+        popl %ebx
+        popl %edi
+        popl %esi
+        popl %ebp
+        ret
+
 
 
 loop_again:
         movl NEXT(%ebx), %ebx #move to the next element on the list
         jmp first_loop #then go back to the first loop
 
-*/
+
 ret
 
 
