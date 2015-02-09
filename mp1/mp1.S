@@ -77,7 +77,7 @@ first_loop:
 
         #check the status!
         cmpw $0x0, STATUS(%ebx) #compare status bit to zero
-        je off
+        jne off
 
         #default that status is 1
         movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
@@ -89,7 +89,7 @@ first_loop:
 loop_again:
         movl NEXT(%ebx), %ebx #move to the next element on the list
         jmp first_loop #then go back to the first loop
- 
+
 
 off:
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
@@ -100,7 +100,7 @@ off:
 
 done:
         movw %dx, COUNTDOWN(%ebx)
-        xorw $0x1, STATUS(%ebx)
+        xorw $0x1, STATUS(%ebx) #clear
 
 end:
         popl %ebx
@@ -108,15 +108,6 @@ end:
         popl %esi
         popl %ebp
         ret
-
-
-
-
-
-
-
-
-
 
 
 
