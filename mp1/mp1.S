@@ -120,6 +120,9 @@ mp1_ioctl_add:
         pushl      %edi         #destination index
         pushl      %ebx         #preserve base
 
+
+        cmpl $0, %eax
+        je fail
         pushl           $STRUCT_SIZE    #push the size on
         call            mp1_malloc      #allocate the memory
         addl $4, %esp 
@@ -128,6 +131,9 @@ mp1_ioctl_add:
 
         #now make a copy
         movl -STRUCT_SIZE(%ebp), %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
+        cmpl $0, %eax
+        je copy_fail
+
         #before we can call copy, we need to push on 3 things!
         pushl $STRUCT_SIZE #put size on stack
         pushl 8(%ebp) #copy over appropriate pointers for the struct
