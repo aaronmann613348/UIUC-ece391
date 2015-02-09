@@ -379,43 +379,31 @@ mp1_ioctl_sync:
 
         movl LOCATION(%edi), %eax
         shll $1, %eax
-        movl OFF_CHAR(%edi), %ecx
-        movl ON_CHAR(%edi), %ebx
         andb $0x1, STATUS(%edi)
         movl %ebx, %ecx
 
 check_status_sync:
-        cmpw $0, STATUS(%ebx) #compare status bit to zero
+        cmpw $0, STATUS(%edi) #compare status bit to zero
         je sync_off
         jne sync_on
 
 sync_on:
         xorl %eax, %eax
-        xorl %ecx, %ecx
-
-        movb OFF_CHAR(%ebx), %cl #want OPPOSITE!
-        movzwl LOCATION(%ebx), %eax # put location in eax
+        movl OFF_CHAR(%edi), %ecx #want OPPOSITE!
+        movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-        movw OFF_LENGTH(%ebx), %dx
-        movw %dx, COUNTDOWN(%ebx)
-        movw $0x0, STATUS(%ebx) #put hex 0 into the STATUS spot
         jmp loop_again_sync
        
 
-
-
 sync_off:
+      
         xorl %eax, %eax
-        xorl %ecx, %ecx
-        
-        movb ON_CHAR(%ebx), %cl #want OPPOSITE!
-         movzwl LOCATION(%ebx), %eax # put location in eax
+        movl ON_CHAR(%edi), %ebx #want OPPOSITE!
+        movzwl LOCATION(%edi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-         movw ON_LENGTH(%ebx), %dx
-         movw %dx, COUNTDOWN(%ebx)
-        movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
+        
         
 loop_again_sync:
         movl NEXT(%ebx), %ebx #move to the next element on the list
