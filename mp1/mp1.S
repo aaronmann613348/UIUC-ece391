@@ -142,6 +142,7 @@ mp1_ioctl_add:
         pushl 8(%ebp) #copy over appropriate pointers for the struct
         pushl %ebx #copy over appropriate pointers for the struct
         call mp1_copy_from_user #now call copy from user
+        addl $12, %esp
         #check for failure
         cmpl $0, %eax #anything other than zero is a fail
         jne copy_fail #anything other than zero is a fail... /=0 is a fail
