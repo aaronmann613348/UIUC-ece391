@@ -132,10 +132,6 @@ mp1_ioctl_add:
         cmpl $0, %eax   #test if the malloc worked
         je fail  # go to fail helper function if the malloc returned a null
 
-        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
-        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
-
-
         #now make a copy
         movl %eax, %ebx #put a pointer to the structure in ebx by putting ebp-stuct size in it
         cmpl $0, %eax
@@ -154,33 +150,36 @@ mp1_ioctl_add:
         jne copy_fail #anything other than zero is a fail... /=0 is a fail
         #need to check location thing now (don't totally get this)
 
-        
+        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
+        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
+
         #we're good to go lets set the STATUS
         #using mov notes from page 20 of notes
         movw ON_LENGTH(%ebx), %dx # DX<-M[EDX+ON_LENGTH]
         movw %dx, COUNTDOWN(%ebx) # put on length in countdown!!!
         movw $0x1, STATUS(%ebx) #put hex 1 into the STATUS spot
 
-
-        popl %edx
+        #changind d to b from here down
+        popl %ebx
         #now add this thing to the list head
         movl    mp1_list_head, %eax #hold head pointer
-        movl    %eax, NEXT(%edx) #set next pointer
-        movl    %edx, mp1_list_head #set new head
+        movl    %eax, NEXT(%ebx) #set next pointer
+        movl    %ebx, mp1_list_head #set new head
 
         #finally make poke call
 
                                 #appropriate register parameters?
 
-        movw LOCATION(%edx), %ax # put the correct offset in eax
+        movw LOCATION(%ebx), %ax # put the correct offset in eax
         shll $1, %eax
-        movb ON_CHAR(%edx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
+        movb ON_CHAR(%ebx), %cl # use movb becasue cl is low 8 bits.. put ascii to write there
         call mp1_poke           #call this thing
         jmp success             #done
 
 copy_fail:
-        movl $-1, %eax #put -1 in for the return it it failed
         call mp1_free   #this fail also needs to have a clear for the malloc
+        movl $-1, %eax #put -1 in for the return it it failed
+        
         jmp leave_helper #leave helper pops everythig stored off 
 
 fail: 
