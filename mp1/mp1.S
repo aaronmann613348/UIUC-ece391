@@ -76,7 +76,7 @@ first_loop:
         shll $1, %eax
 
         #check the status!
-        cmpw $0x0, STATUS(%ebx) #compare status bit to zero
+        cmpw $0x1, STATUS(%ebx) #compare status bit to zero
         jne off
 
         #default that status is 1
