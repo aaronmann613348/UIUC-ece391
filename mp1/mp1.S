@@ -126,12 +126,6 @@ mp1_ioctl_add:
         movl 8(%ebp), %eax
         cmpl $0, %eax
         je fail
-
-        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
-        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
-
-
-        
         pushl           $STRUCT_SIZE    #push the size on
         call            mp1_malloc      #allocate the memory
         addl $4, %esp 
@@ -156,7 +150,9 @@ mp1_ioctl_add:
         jne copy_fail #anything other than zero is a fail... /=0 is a fail
         #need to check location thing now (don't totally get this)
 
-        
+        cmpw $80*25-1, LOCATION(%ebx) #use w becasue location is unsigned short
+        ja fail  #send it to fail if the location is off.. that is, if the difference is greater than zero
+
         #we're good to go lets set the STATUS
         #using mov notes from page 20 of notes
         movw ON_LENGTH(%ebx), %dx # DX<-M[EDX+ON_LENGTH]
