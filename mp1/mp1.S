@@ -321,7 +321,7 @@ mp1_ioctl_find:
         pushl $STRUCT_SIZE #put size on stack
         pushl %eax #copy over appropriate pointers for the struct
         pushl 8(%ebp) #copy over appropriate pointers for the struct
-        call mp1_copy_from_user #now call copy from user
+        call mp1_copy_to_user #now call copy from user
         addl $12, %esp
         cmpl $0, %eax
         je find_worked
@@ -409,6 +409,8 @@ mp1_ioctl_sync:
         cmpl $0, %eax
         je sync_failed
         movl %eax, %edi
+
+        andl $0, %eax
 
         movw ON_LENGTH(%esi), %ax
         movw %ax, ON_LENGTH(%edi)
