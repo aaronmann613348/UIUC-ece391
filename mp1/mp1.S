@@ -305,18 +305,7 @@ mp1_ioctl_find:
         call find_helper
         addl $4, %esp
         cmpl $0, %eax
-        je find_failed   
-       
-        
-        pushl $STRUCT_SIZE #put size on stack
-        pushl %eax
-        pushl %ebx
-        call mp1_copy_from_user #now call copy from user
-        addl $12, %esp
-        cmpl $0, %eax
-        je find_failed
-
-        
+        je find_failed    
 
         pushl $STRUCT_SIZE #put size on stack
         pushl %eax #copy over appropriate pointers for the struct
