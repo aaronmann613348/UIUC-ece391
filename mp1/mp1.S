@@ -84,7 +84,12 @@ first_loop:
         call mp1_poke
         movw OFF_LENGTH(%ebx), %dx
         jmp done
-        
+       
+
+loop_again:
+        movl NEXT(%ebx), %ebx #move to the next element on the list
+        jmp first_loop #then go back to the first loop
+ 
 
 off:
         movb ON_CHAR(%ebx), %cl #want OPPOSITE!
@@ -106,9 +111,6 @@ end:
 
 
 
-loop_again:
-        movl NEXT(%ebx), %ebx #move to the next element on the list
-        jmp first_loop #then go back to the first loop
 
 
 
