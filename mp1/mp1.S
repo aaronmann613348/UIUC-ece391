@@ -243,7 +243,66 @@ success:
 
         
 mp1_ioctl_remove:
-	ret
+	    pushl     %ebp                          #save old frame Pointer
+        movl      %esp, %ebp                    #point to new frame
+        pushl      %esi         #source index
+        pushl      %edi         #destination index
+        pushl      %ebx         #preserve base
+        pushl 8(%ebp)
+        call find_helper
+        addl $4, %esp 
+        cmpl $0, %eax   #test if the malloc worked
+        je remove_failed
+
+        movl mp1_list_head, %edx
+remove_loop:
+        cmpl %eax (%edx)
+        je found
+        movl (%edx), %edx
+        movl NEXT(%edx), %edx
+        jmp remove_loop
+
+        
+found:
+    movl NEXT(%eax), %ecx
+    movl %ecx, (%edx)
+
+
+
+free_allocated:
+    pushl %eax
+    call mp1_free
+    addl $4, %esp
+    jmp remove_worked
+
+remove_failed:
+    movl $-1, %eax
+    jmp leave_remove
+
+remove_worked:
+    movl $0, %eax
+
+leave_remove:
+    popl %ebx
+    popl %edi
+    popl %esi
+    leave
+    ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
 mp1_ioctl_find:
         pushl     %ebp                          #save old frame Pointer
@@ -372,8 +431,6 @@ mp1_ioctl_sync:
         movw %ax, OFF_LENGTH(%edi)
         movw COUNTDOWN(%esi), %ax
         movw %ax, COUNTDOWN(%edi)
-
-
         movw STATUS(%esi), %ax
         movw %ax, STATUS(%edi)
 
@@ -384,11 +441,6 @@ check_status_sync:
         je sync_on
         jne sync_off
 
-
-
-
-
-
 sync_on:
         xorl %eax, %eax
         movb OFF_CHAR(%edi), %cl #want OPPOSITE!
@@ -397,7 +449,6 @@ sync_on:
         call mp1_poke
         jmp sync_worked
        
-
 sync_off:
       
         xorl %eax, %eax
@@ -408,8 +459,6 @@ sync_off:
         jmp sync_worked
         
         
-
-
 sync_failed:
         movl $-1, %eax
         jmp done_with_sync
