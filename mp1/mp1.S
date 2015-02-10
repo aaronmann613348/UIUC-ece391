@@ -381,7 +381,7 @@ mp1_ioctl_sync:
 
         #lets get started
         movl 8(%ebp), %eax
-        movl %ax, %dx #split argument
+        movw %ax, %dx #split argument
         pushl %eax
         call find_helper
         addl $4, %esp
