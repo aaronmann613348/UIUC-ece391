@@ -378,7 +378,7 @@ mp1_ioctl_sync:
         #lets get started
         movl 8(%ebp), %eax
         movw %ax, %dx #split argument
-        pushl %dx
+        pushl %edx
         call find_helper
         addl $4, %esp
         cmpl $0, %eax
@@ -387,7 +387,7 @@ mp1_ioctl_sync:
 
         movl 8(%ebp), %eax
         shrl $16, %eax
-        pushl %ax
+        pushl %eax
         call find_helper
         addl $4, %esp
         cmpl $0, %eax
@@ -416,7 +416,7 @@ sync_on:
 
         movb ON_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movw LOCATION(%esi), %eax # put location in eax
+        movw LOCATION(%esi), %ax # put location in eax
         shll $1, %eax
         call mp1_poke
         jmp sync_worked
@@ -425,7 +425,7 @@ sync_off:
       
         movb OFF_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movw LOCATION(%esi), %eax # put location in eax
+        movw LOCATION(%esi), %ax # put location in eax
         shll $1, %eax
         call mp1_poke
         jmp sync_worked
