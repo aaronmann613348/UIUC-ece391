@@ -129,11 +129,7 @@ error:
 
 
 
-mp1_ioctl:                                      #dispatcher    
-                                
-                                                #writing this first
-                                                #gonna need a function table (jump table)
-                                                #put shit on stack
+mp1_ioctl:                                     
 
         movl    8(%esp), %eax                   #move stack pointer into our general purpose Register
 
@@ -159,7 +155,7 @@ mp1_ioctl_add:
         pushl     %ebp                          #save old frame Pointer
         movl      %esp, %ebp                    #point to new frame
         #got all that form page 24 of course notes
-        #I'm gonna also save the other Registers
+       
 
         pushl      %esi         #source index
         pushl      %edi         #destination index
@@ -420,7 +416,7 @@ sync_on:
 
         movb ON_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movzwl LOCATION(%esi), %eax # put location in eax
+        movw LOCATION(%esi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
         jmp sync_worked
@@ -429,7 +425,7 @@ sync_off:
       
         movb OFF_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movzwl LOCATION(%esi), %eax # put location in eax
+        movw LOCATION(%esi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
         jmp sync_worked
