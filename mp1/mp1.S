@@ -419,22 +419,20 @@ check_status_sync:
 
 sync_on:
 
-        movb OFF_CHAR(%esi), %cl #want OPPOSITE!
-        xorl %eax, %eax
-        movzwl LOCATION(%esi), %eax # put location in eax
-        shll $1, %eax
-        call mp1_poke
-        movw $0, STATUS(%esi)
-        jmp sync_worked
-       
-sync_off:
-      
         movb ON_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
         movzwl LOCATION(%esi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-        movw $1, STATUS(%esi)
+        jmp sync_worked
+       
+sync_off:
+      
+        movb OFF_CHAR(%esi), %cl #want OPPOSITE!
+        xorl %eax, %eax
+        movzwl LOCATION(%esi), %eax # put location in eax
+        shll $1, %eax
+        call mp1_poke
         jmp sync_worked
         
         
