@@ -412,29 +412,29 @@ mp1_ioctl_sync:
 
 
 check_status_sync:    
-        movw STATUS(%edi), %cx
+        movw STATUS(%esi), %cx
         cmpw $0, %cx
         jne sync_on
         jmp sync_off
 
 sync_on:
 
-        movb OFF_CHAR(%edi), %cl #want OPPOSITE!
+        movb OFF_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movzwl LOCATION(%edi), %eax # put location in eax
+        movzwl LOCATION(%esi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-        movw $0, STATUS(%edi)
+        movw $0, STATUS(%esi)
         jmp sync_worked
        
 sync_off:
       
-        movb ON_CHAR(%edi), %cl #want OPPOSITE!
+        movb ON_CHAR(%esi), %cl #want OPPOSITE!
         xorl %eax, %eax
-        movzwl LOCATION(%edi), %eax # put location in eax
+        movzwl LOCATION(%esi), %eax # put location in eax
         shll $1, %eax
         call mp1_poke
-        movw $1, STATUS(%edi)
+        movw $1, STATUS(%esi)
         jmp sync_worked
         
         
