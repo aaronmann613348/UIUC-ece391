@@ -337,7 +337,7 @@ find_helper:
         movl      %esp, %ebp 
         movw 8(%ebp), %ax
         movl mp1_list_head, %ebx #get a  pointer
-
+        movl %ebx, %ecx
 
 mainloop:
         cmpl $0, %ebx #check for null
