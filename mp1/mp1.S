@@ -255,10 +255,12 @@ mp1_ioctl_remove:
 
         movl mp1_list_head, %edx
 remove_loop:
+        cmpl $0, %edx
+        je remove_failed
         cmpl %eax, (%edx)
         je found
-        movl (%edx), %edx
         movl NEXT(%edx), %edx
+
         jmp remove_loop
 
 
@@ -412,8 +414,8 @@ mp1_ioctl_sync:
 
 check_status_sync:    
         movw STATUS(%edi), %cx
-        cmpw $1, %cx
-        je sync_on
+        cmpw $0, %cx
+        jne sync_on
         jmp sync_off
 
 sync_on:
