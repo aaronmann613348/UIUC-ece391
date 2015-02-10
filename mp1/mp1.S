@@ -414,7 +414,7 @@ check_status_sync:
         movw STATUS(%edi), %cx
         cmpw $1, %cx
         je sync_on
-        jne sync_off
+        jmp sync_off
 
 sync_on:
 
