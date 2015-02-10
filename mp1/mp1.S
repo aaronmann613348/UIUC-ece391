@@ -250,7 +250,7 @@ mp1_ioctl_remove:
         pushl 8(%ebp)
         call find_helper
         addl $4, %esp 
-        cmpl $0, %eax   #test if the malloc worked
+        cmpl $0, %eax   
         je remove_failed
 
         movl mp1_list_head, %edx
@@ -260,7 +260,6 @@ remove_loop:
         cmpl %eax, (%edx)
         je found
         movl NEXT(%edx), %edx
-
         jmp remove_loop
 
 
@@ -309,8 +308,8 @@ mp1_ioctl_find:
         cmpl $0, %eax
         je find_failed    
 
-        pushl $STRUCT_SIZE #put size on stack
-        pushl %eax #copy over appropriate pointers for the struct
+        pushl $STRUCT_SIZE 
+        pushl %eax 
         pushl 8(%ebp) #copy over appropriate pointers for the struct
         call mp1_copy_to_user #now call copy from user
         addl $12, %esp
@@ -384,7 +383,7 @@ mp1_ioctl_sync:
         #lets get started
         movl 8(%ebp), %eax
         movw %ax, %dx #split argument
-        pushl %eax
+        pushl %dx
         call find_helper
         addl $4, %esp
         cmpl $0, %eax
@@ -392,8 +391,8 @@ mp1_ioctl_sync:
         movl %eax, %esi
 
         movl 8(%ebp), %eax
-        shrl $16,%edx
-        pushl %eax
+        shrl $16, %eax
+        pushl %ax
         call find_helper
         addl $4, %esp
         cmpl $0, %eax
@@ -402,14 +401,14 @@ mp1_ioctl_sync:
 
         andl $0, %eax
 
-        movw ON_LENGTH(%esi), %ax
-        movw %ax, ON_LENGTH(%edi)
-        movw OFF_LENGTH(%esi), %ax
-        movw %ax, OFF_LENGTH(%edi)
-        movw COUNTDOWN(%esi), %ax
-        movw %ax, COUNTDOWN(%edi)
-        movw STATUS(%esi), %ax
-        movw %ax, STATUS(%edi)
+        movw ON_LENGTH(%edi), %ax
+        movw %ax, ON_LENGTH(%esi)
+        movw OFF_LENGTH(%edi), %ax
+        movw %ax, OFF_LENGTH(%esi)
+        movw COUNTDOWN(%edi), %ax
+        movw %ax, COUNTDOWN(%esi)
+        movw STATUS(%edi), %ax
+        movw %ax, STATUS(%esi)
 
 
 check_status_sync:    
