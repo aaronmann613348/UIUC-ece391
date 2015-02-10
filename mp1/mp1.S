@@ -335,7 +335,6 @@ leave_find:
 find_helper:
         pushl     %ebp
         movl      %esp, %ebp 
-        pushl %ebx #save that shit!
         movw 8(%ebp), %ax
         movl mp1_list_head, %ebx #get a  pointer
 
