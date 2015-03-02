@@ -550,6 +550,7 @@ show_status(int level, int fruit, int t)
     int minutes;
     char str[40];//holder sting for sprintf statement
 
+    //holders for time
     seconds = t%60;
     minutes = t/60;
    
@@ -558,14 +559,14 @@ show_status(int level, int fruit, int t)
     sprintf(str,"Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
     text_to_image(str);
     }
-    else
+    else//singular fruits
     {
     sprintf(str, "Level %d   %d Fruit   %02d:%02d" , level, fruit, minutes, seconds);
     text_to_image(str);
     }
 
 
-
+    //draw to each plane
     int i;
     for(i = 0; i < 4 ; i++)
     {
