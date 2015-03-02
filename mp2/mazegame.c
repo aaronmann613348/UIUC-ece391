@@ -466,9 +466,20 @@ static void *rtc_thread(void *arg)
 		// Show maze around the player's original position
 		(void)unveil_around_player (play_x, play_y);
 
-		draw_full_block (play_x, play_y, get_player_block(last_dir));
-		show_screen();
+		int old_x;
+		int old_y;
 
+
+		old_x = play_x;
+		old_y = play_y;
+
+		draw_masking_block(play_x, play_y, get_player_block(last_dir), get_player_mask(last_dir), background_formask);//blk, mask, background_formask
+		show_screen();
+		draw_full_block (old_x, old_y, background_formask);//old values are stored for play_x and play_y
+		
+		
+
+		//calculate time!
 		time_t t;
 		time_t end_time; 
 		t = time(NULL);
@@ -591,11 +602,19 @@ static void *rtc_thread(void *arg)
 						move_left (&play_x);  
 						break;
 		   			}
-					draw_full_block (play_x, play_y, get_player_block(last_dir));	
+					//draw_full_block (play_x, play_y, get_player_block(last_dir));	
 					need_redraw = 1;
 				}
 			}
-			if (need_redraw) show_screen();	
+			if (need_redraw) 
+			{
+				old_x = play_x;
+				old_y = play_y;
+				draw_masking_block(play_x, play_y, get_player_block(last_dir), get_player_mask(last_dir), background_formask);//blk, mask, background_formask
+				show_screen();
+				draw_full_block(old_x, old_y, background_formask);	
+					
+			}
 			need_redraw = 0;
 		}	
 	}

@@ -108,6 +108,10 @@
  * is drawn.  Other data are left untouched in most cases.
  */
 
+
+
+
+
 /* configure VGA for mode X; initializes logical view to (0,0) */
 extern int set_mode_X (void (*horiz_fill_fn)
                             (int, int, unsigned char[SCROLL_X_DIM]),
@@ -135,10 +139,20 @@ extern void clear_screens ();
  */
 extern void draw_full_block (int pos_x, int pos_y, unsigned char* blk);
 
+
+//modification of draw full block
+//its for the masking we do at the end of 2.1
+extern void draw_masking_block(int pos_x, int pos_y, unsigned char * blk , unsigned char * masking, unsigned char * background);
+
+//global background array
+unsigned char background_formask[144];
+
 /* draw a horizontal line at vertical pixel y within the logical view window */
 extern int draw_horiz_line (int y);
 
 /* draw a vertical line at horizontal pixel x within the logical view window */
 extern int draw_vert_line (int x);
+
+
 
 #endif /* MODEX_H */
