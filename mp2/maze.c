@@ -52,7 +52,7 @@
 
 
 /* Set to 1 to remove all walls as a debugging aid. (Nate Taylor, S07). */
-#define GOD_MODE 0
+#define GOD_MODE 1
 
 
 /* local functions--see function headers for details */
@@ -86,6 +86,13 @@ static int maze_x_dim;	      /* horizontal dimension of maze */
 static int maze_y_dim;	      /* vertical dimension of maze   */
 static int n_fruits;          /* number of fruits in maze     */
 static int exit_x, exit_y;    /* lattice point of maze exit   */
+
+
+
+int return_n_fruits()
+{
+	return n_fruits;
+}
 
 
 /* 
@@ -177,6 +184,7 @@ mark_maze_area (int x, int y)
      */
     return q_end;
 }
+
 
 
 /* 

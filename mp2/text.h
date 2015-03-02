@@ -43,4 +43,31 @@
 /* Standard VGA text font. */
 extern unsigned char font_data[256][16];
 
+
+unsigned char buffer[5760]; //global buffer array 
+/*
+    text to graphics image generation routine.  
+    Given a string, it should produce a buffer 
+    that holds the graphical image of the ASCII characters in a string. 
+    height of the buffer is fixed.
+
+    either:
+    a)figure out how much text fits on the status bar and produce a buffer of fixed size
+    b)return the resulting image width
+
+    in either case:
+    the test must be centered on the bar
+
+    Basically were drawing this thing in the buffer?
+    //put in one of two colors (color 1 or color 2)
+    //depending on which bit of holder we're on
+    
+
+    INPUT:
+        const char * string  -->string were reading in
+        unsigned char * buffer -->image buffer were writing to
+
+*/
+
+void text_to_image(const char * string);
 #endif /* TEXT_H */

@@ -439,6 +439,7 @@ static void *rtc_thread(void *arg)
 	int need_redraw = 0;
 	int goto_next_level = 0;
 
+
 	// Loop over levels until a level is lost or quit.
 	for (level = 1; (level <= MAX_LEVEL) && (quit_flag == 0); level++)
 	{
@@ -468,14 +469,22 @@ static void *rtc_thread(void *arg)
 		draw_full_block (play_x, play_y, get_player_block(last_dir));
 		show_screen();
 
+		time_t t;
+		time_t end_time; 
+		t = time(NULL);
 		// get first Periodic Interrupt
 		ret = read(fd, &data, sizeof(unsigned long));
-
+		time(&t);
 		while ((quit_flag == 0) && (goto_next_level == 0))
 		{
 			// Wait for Periodic Interrupt
 			ret = read(fd, &data, sizeof(unsigned long));
-		
+			int fruit;
+			fruit = return_n_fruits();
+			time(&end_time);
+			int difference;
+			difference = (int)difftime(end_time, t);
+			show_status(level, fruit, difference);
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so
 			// that player velocity is smooth

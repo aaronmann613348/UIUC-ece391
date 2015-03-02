@@ -79,15 +79,19 @@
 #define NUM_GRAPHICS_REGS       9
 #define NUM_ATTR_REGS          22
 
+
+
+
+
 /* VGA register settings for mode X */
 static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
     0x0100, 0x2101, 0x0F02, 0x0003, 0x0604
 };
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
     0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
-    0x0008, 0x4109, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
+    0x0008, 0x0109, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,//changed 0x4109 to 0X0109
     0x9C10, 0x8E11, 0x8F12, 0x2813, 0x0014, 0x9615, 0xB916, 0xE317,
-    0xFF18
+    0x6E18 //changed OxFF18 to 0x6E18
 };
 static unsigned char mode_X_attr[NUM_ATTR_REGS * 2] = {
     0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 
@@ -138,6 +142,8 @@ static void fill_palette ();
 static void write_font_data ();
 static void set_text_mode_3 (int clear_scr);
 static void copy_image (unsigned char* img, unsigned short scr_addr);
+static void copy_status (unsigned char* img, unsigned short scr_addr);
+
 
 
 /* 
@@ -301,7 +307,7 @@ set_mode_X (void (*horiz_fill_fn) (int, int, unsigned char[SCROLL_X_DIM]),
     }
 
     /* One display page goes at the start of video memory. */
-    target_img = 0x0000; 
+    target_img = 0x05A0; //check with alex
 
     /* Map video memory and obtain permission for VGA port access. */
     if (open_memory_and_ports () == -1)
@@ -526,6 +532,40 @@ show_screen ()
     OUTW (0x03D4, ((target_img & 0x00FF) << 8) | 0x0D);
 }
 
+void
+show_status(int level, int fruit, int t)
+{
+   
+    int seconds;
+    int minutes;
+    char str[40];//holder sting for sprintf statement
+
+    seconds = t%60;
+    minutes = t/60;
+   
+    if(fruit > 2 || fruit ==2)//need plural fruits in print statment
+    {
+    sprintf(str,"Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
+    text_to_image(str);
+    }
+    else
+    {
+    sprintf(str, "Level %d   %d Fruit   %02d:%02d" , level, fruit, minutes, seconds);
+    text_to_image(str);
+    }
+
+
+
+    int i;
+    for(i = 0; i < 4 ; i++)
+    {
+      SET_WRITE_MASK(1 << (i + 8));
+      copy_status(buffer+(i*1440), 0x0000);
+    }
+
+
+}
+
 
 /*
  * clear_screens
@@ -640,8 +680,42 @@ draw_full_block (int pos_x, int pos_y, unsigned char* blk)
 int
 draw_vert_line (int x)
 {
-    /* to be written... */
-    return 0;
+    unsigned char buf[SCROLL_Y_DIM];//buffer for graphical image of line
+    unsigned char * addr; //address of first pixel in build
+
+    int p_off;//offset of plane for first pixel
+    int j;//loop index
+
+    if(x < 0 || x > SCROLL_X_DIM)//check if were in the right window
+    {
+      return -1;
+    }
+
+    //adjust x to the logical column value
+    x += show_x;
+    //get the image of the line
+    (*vert_line_fn)(x, show_y, buf);
+    //calculate starting address in build buffer
+
+
+    addr = img3 + (x >> 2) + (show_y * SCROLL_X_WIDTH);
+    //calculate plane offset
+    p_off = (3- (x & 3));
+
+    //copy data into appropriate planes in build buffer
+    for(j = 0; j< SCROLL_Y_DIM; j++)
+    {
+      addr[p_off*SCROLL_SIZE] = buf[j];
+
+      addr += SCROLL_X_WIDTH;
+
+      //going vertically--> won't switch plaines so we don't need to be checking the p_off like in draw_horiz_line
+    }
+
+
+
+    
+    return 0;//success
 }
 
 
@@ -1018,6 +1092,25 @@ copy_image (unsigned char* img, unsigned short scr_addr)
 }
 
 
+static void
+copy_status (unsigned char* img, unsigned short scr_addr)
+{
+    /* 
+     * memcpy is actually probably good enough here, and is usually
+     * implemented using ISA-specific features like those below,
+     * but the code here provides an example of x86 string moves
+     */
+    asm volatile (
+        "cld                                                 ;"
+        "movl $1440 , %%ecx                                   ;"
+        "rep movsb    # copy ECX bytes from M[ESI] to M[EDI]  "
+      : /* no outputs */
+      : "S" (img), "D" (mem_image + scr_addr) 
+      : "eax", "ecx", "memory"
+    );
+}
+
+
 #if defined(TEXT_RESTORE_PROGRAM)
 
 /*
@@ -1030,6 +1123,16 @@ copy_image (unsigned char* img, unsigned short scr_addr)
  *   OUTPUTS: none
  *   RETURN VALUE: 0 on success, 3 in panic scenarios
  */   
+
+
+
+
+
+
+
+
+
+ 
 int
 main ()
 {

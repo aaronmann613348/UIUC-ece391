@@ -562,3 +562,76 @@ unsigned char font_data[256][16] = {
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
+
+/*
+    text to graphics image generation routine.  
+    Given a string, it should produce a buffer 
+    that holds the graphical image of the ASCII characters in a string. 
+    height of the buffer is fixed.
+
+    either:
+    a)figure out how much text fits on the status bar and produce a buffer of fixed size
+    b)return the resulting image width
+
+    in either case:
+    the test must be centered on the bar
+
+    Basically were drawing this thing in the buffer
+    //put in one of two colors (color 1 or color 2)
+    //depending on which bit of holder we're on
+    
+
+    INPUT:
+        const char * string  -->string were reading in
+    
+
+*/
+void text_to_image(const char * string)
+{
+
+
+    int i, j, k; //indexes for going through the input
+    int string_length; //holds the array length
+    int index; //index of buffer to make the conversion to
+    int starting_index;//starting point for index --> index = starting index + ...
+    int color; //color we're populating
+    int bitmask;//used for assigning color
+
+
+    bitmask = 0x80;
+    color = 0x04; //random number it doesn't really matter (blue)
+    string_length = strlen(string);//function in string.h
+    starting_index = (320 -(string_length*8))/2; //we need to center it
+
+
+    for(i = 0; i < 5760 ; i++) //buffer size = (16+2) *320 = 5760
+    {
+        buffer[i] = 0x00;//random color to fill background with (green)
+    }
+
+
+    for(i = 0; i < string_length; i++) //current character
+    {
+        for(j = 1; j < 17; j++) //each character has 16 rows (hex value entries)
+        {
+            
+            bitmask = 0x80;
+
+            for(k = 0; k < 8 ; k++) //8 bits per row (hex value entry)
+            {
+
+                
+                index = starting_index /4+ (k%4*1440)+(j*80)+(i*2)+k/4;//buffer mapping
+
+                if(font_data[(int)string[i]][j-1] & bitmask) //if bit is 1, we write the color to buffer
+                {
+                    buffer[index] = color;
+                }
+
+                bitmask = bitmask >> 1; //shift the bitmask over  
+
+            }
+        }
+    }
+}
+
