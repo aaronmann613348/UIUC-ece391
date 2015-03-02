@@ -88,7 +88,11 @@ static int n_fruits;          /* number of fruits in maze     */
 static int exit_x, exit_y;    /* lattice point of maze exit   */
 
 
-
+/*
+	doesn't take input
+	just returns the number of fruits
+	(needed this becasue n_fruits was static in this file)
+*/
 int return_n_fruits()
 {
 	return n_fruits;

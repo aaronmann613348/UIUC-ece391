@@ -533,6 +533,15 @@ show_screen ()
     OUTW (0x03D4, ((target_img & 0x00FF) << 8) | 0x0D);
 }
 
+/*
+    function to show the status bar with the level, number of remaining fruit, and time
+    INPUTS are level, fruit and time
+    and it takes these imputs from mazegame
+    the funtions is used in rtc_thread of main game where its input parameters are also defined
+
+    sends status bar to the screen using text_to_image from text.c
+*/
+
 void
 show_status(int level, int fruit, int t)
 {
@@ -658,13 +667,19 @@ draw_full_block (int pos_x, int pos_y, unsigned char* blk)
   Its draw full block modified.
   IF pixel is copied from player image to screen, then store its value in the buffer
 
+  INPUTS added to draw_full_block are:
+  unsigned char * masking and unsigned char * background
+  blk holds the player spot
+  masking determines which pixels are copied from player image to the screen
+  background is the holds the color to fill
+
 */
 void draw_masking_block(int pos_x, int pos_y, unsigned char * blk, unsigned char * masking, unsigned char * background)
 {
 
    
 
-   background = background_formask;
+   background = background_formask; //using global array defined in modex.h
 
 
 
@@ -719,15 +734,16 @@ void draw_masking_block(int pos_x, int pos_y, unsigned char * blk, unsigned char
       {
 
         
-        *background = *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE);
+        *background = *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE);//fill color
          
-        if(*masking == 1)
+        if(*masking == 1) //check if pixels are copied from player image
         {
-           *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE) = *blk;
+           *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE) = *blk;//player position 
         }
 
             
       }
+            //incrememnt appropriately
             pos_x -= x_right;
             blk += x_left;
             masking += x_left;
@@ -1175,7 +1191,9 @@ copy_image (unsigned char* img, unsigned short scr_addr)
       : "eax", "ecx", "memory"
     );
 }
-
+/*
+  same function as copy immage essentially but we move 1440 into ecx instead of 16000
+*/
 
 static void
 copy_status (unsigned char* img, unsigned short scr_addr)

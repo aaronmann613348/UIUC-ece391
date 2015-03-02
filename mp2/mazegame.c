@@ -468,8 +468,7 @@ static void *rtc_thread(void *arg)
 
 		int old_x;
 		int old_y;
-
-
+		//store values of play_x and play_y
 		old_x = play_x;
 		old_y = play_y;
 
@@ -490,11 +489,13 @@ static void *rtc_thread(void *arg)
 		{
 			// Wait for Periodic Interrupt
 			ret = read(fd, &data, sizeof(unsigned long));
-			int fruit;
-			fruit = return_n_fruits();
+			int fruit;//define a variable fruit
+			fruit = return_n_fruits();//call function in maze.c to get number of remaining fruits
+			//used functions in <time.h> include for this
 			time(&end_time);
 			int difference;
 			difference = (int)difftime(end_time, t);
+			//call show status to show status bar
 			show_status(level, fruit, difference);
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so

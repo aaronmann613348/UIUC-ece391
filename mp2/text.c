@@ -583,6 +583,8 @@ unsigned char font_data[256][16] = {
 
     INPUT:
         const char * string  -->string were reading in
+
+    Writes to buffer given the correct index for the buffer
     
 
 */
