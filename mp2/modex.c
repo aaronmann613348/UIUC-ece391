@@ -548,7 +548,7 @@ show_status(int level, int fruit, int t)
    
     int seconds;
     int minutes;
-    char str[40];//holder sting for sprintf statement
+    char str[160];//holder sting for sprintf statement
 
     //holders for time
     seconds = t%60;

@@ -603,11 +603,12 @@ static void *rtc_thread(void *arg)
 						move_left (&play_x);  
 						break;
 		   			}
-					//draw_full_block (play_x, play_y, get_player_block(last_dir));	
+					
 					need_redraw = 1;
+					//bug exists here! for when it runs into the wall. need to add an if()
 				}
 			}
-			if (need_redraw) 
+			if (1) //always redraw! instead of new if(), just change the old if(redraw)
 			{
 				old_x = play_x;
 				old_y = play_y;
