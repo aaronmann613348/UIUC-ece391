@@ -64,28 +64,11 @@ extern int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg);
 
 
 
-
-
-
-
-
 /*
-*	helper function to parse the 32 bit arg
-*	INPUTS:
-*		arg -- the actual argument
-*		startByte -- the byte we want to start parsing at
-*		numBit -- the number of its we want to take from that byte
-*	RETUNTS:
-*		the new number we want
-*/
+ *
+ *	Reset Handler
+ */
+extern void tux_reset_helper(struct tty_struct * tty);
 
-extern int parser_helper_byByte(unsigned long arg, int startByte, int numBit);
-
-
-extern int parser_helper_byBit(unsigned long arg, int startBit);
-
-extern int hex_to_seven(int LED_VAL, int DEC);
-
-void tux_reset_helper(struct tty_struct * tty);
 
 
