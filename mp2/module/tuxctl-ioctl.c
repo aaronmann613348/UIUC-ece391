@@ -33,6 +33,11 @@ static int buttons;
 static int led;
 static int reset;
 
+#define BITMASK_byte 0x0F//define bitmask 00001111
+#define BITMASK_fourbit 0xF //define bitmask 1111
+#define BITMASK_twobyte 0x000F//define bitmask 0000 0000 0000 1111
+
+#define ADD_DEC 0x10//for seven segment rep.. decimal is on fourth most significant bit of seven seg representation
 
 
 
@@ -69,7 +74,10 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
     		break;
 /*
     	case MTCP_BIOC_EVENT:
-
+			//need the buttons!!!  ___ 	___
+								  |	|    | |
+								  |	  _\   |
+								  |	______ |
     		break;
 */
     	case MTCP_RESET: 
@@ -79,7 +87,7 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
 
 
     	default:
-    		return -EINVAL;
+    		return;
 
     }
 
@@ -167,101 +175,82 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 *	low 4 bits of the third byte (19:16) specify which LEDs should be on
 *	lwo 4 bits of the highest byte (27:24) specify whether the corresponding decimal points should be turned on
 
+	bitmasks defined above:
+	#define BITMASK_byte 0x0F//define bitmask 00001111
+	#define BITMASK_fourbit 0xF //define bitmask 1111
+	#define BITMASK_twobyte 0x000F//define bitmask 0000 0000 0000 1111
+	
+	#define ADD_DEC 0x10//for seven segment rep.. decimal is on fourth most significant bit of seven seg representation
+
 */
+
 int
 tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 {
-	//need to use
-	//MPTC_ACK
-	//MPTC_BIOC_EVENT
+
 
 	
-	char buf[6];// 6 bytes 
+	char buf[6];// 6 bytes; what we'll be sending to the TUX
+	char seven_seg[16] = {0xE7, 0x06,  0xCB, 0x8F, 0x28, 0xAD, 0xED, 0x86, 0xEF, 0xAE, 0xEE, 0xEF, 0xE1, 0xE7, 0xE9, 0xEA};
 	//holds opcode, which LEDS, and 4 hex values to be shown by LEDS
 
-	unsigned int time_bytes;//holder for the low 16 bits
-	unsigned int LED_on;//holder for which LEDs should be turned on
-	unsigned int decimal_on;//holder for decimal points that need to be on
+	int LED_values[4]; // 4 bytes to hold the LED hex values we want
+	int holder1;
+	int holder2;
+	int holder3;
+	int decimals_on;
+	int i;//index
+	int my_arg;//set so that we can hold arg and shift it around
+
+	//need to make a shiftable mask for getting LED values
+	int shiftingMask; // 0000 0000 0000 1111
+	int oneMask; // 0001
 
 
-	int LED0_val;
-	int LED1_val;
-	int LED2_val;
-	int LED3_val;
+	oneMask = 0x1; 
+	shiftingMask = 0x000F;
+	my_arg = arg;
+	holder1 = my_arg >> 24;
+	decimals_on = (holder1 & BITMASK_byte);//first get a binary representation of which decimals are on using bitmask
 
-	int maskbit1;
-	int maskbit2;
-	int maskbit3;
-	int maskbit4;
-
+	holder2 = my_arg >> 16;//shift over 16 to check which LEDS on using bitmask  0000 1111
+	
+	buf[1] = (BITMASK_byte & holder2);//send these 8 bits to the second 'argument' of MTCP_LED_SET
 
 	
-
-	led = arg;
-	time_bytes =  parser_helper_byByte(arg, 1, 16);
-	LED_on = parser_helper_byByte(arg, 3, 4);
-	decimal_on = parser_helper_byByte(arg, 4, 4);
-
-
-	//parse time_bytes
 	
+	//populate array of 8 bit LED values
+	//hold their binary representation in 4 bits
+	for(i = 0; i < 4 ; i++)
+	{
+		
+		holder3 = (shiftingMask & my_arg);//will this work?? not sure because of later values of my_arg
+		LED_values[i] = holder3;
+		shiftingMask = shiftingMask << 4;
+	}
 
-	LED0_val = parser_helper_byBit(time_bytes, 1);
-	LED1_val = parser_helper_byBit(time_bytes, 2);
-	LED2_val = parser_helper_byBit(time_bytes, 3);
-	LED3_val = parser_helper_byBit(time_bytes, 4);
-
-
-	//call hex to seven helper!
-	//first, we need to determine if we want the DEC parameter to be 1 or 0
+	//argument should be fully parsed by now
+	//now we need to convert hex to seven segment and account for decimal point
 	
-	maskbit1 = 0x1; //0001
-	maskbit2 = 0x2; //0010
-	maskbit3 = 0x8; //0100
-	maskbit4 = 0xF; //1000
-
-
-	buf[0] = MTCP_LED_SET;
-	buf[1] = LED_on;
-	if((LED_on & maskbit1) == 1 )
-	{
-		buf[2] = hex_to_seven(LED0_val, 1);
-	}
-	else
-	{
-		buf[2] = hex_to_seven(LED0_val, 0);
-	}
-	if((LED_on & maskbit2) == 1 )
-	{
-		buf[3] = hex_to_seven(LED1_val, 1);
-	}
-	else
-	{
-		buf[3] = hex_to_seven(LED1_val, 0);
-	}
-	if((LED_on & maskbit3) == 1 )
-	{
-		buf[4] = hex_to_seven(LED2_val, 1);
-	}
-	else
-	{
-		buf[4] = hex_to_seven(LED2_val, 0);
-	}
-	if((LED_on & maskbit4) == 1 )
-	{
-		buf[5] = hex_to_seven(LED3_val, 1);
-	}
-	else
-	{
-		buf[5] = hex_to_seven(LED3_val, 0);
-	}
-
 	
-
+	for(i = 0; i < 4 ; i++)
+	{
+		if(decimals_on & oneMask)
+		{
+			buf[i+2] = seven_seg[LED_values[i]] + ADD_DEC;
+		}
+		else
+		{
+			buf[i+2] = seven_seg[LED_values[i]];
+		}
+		oneMask = oneMask << 1;//shift one mask over!
+	}
 
 
 	//we need to set up buf and figure out what the int n arg will be here
-	tuxctl_ldisc_put(tty, buf, 6); //final put call
+	buf[0] = MTCP_LED_SET;
+	
+	tuxctl_ldisc_put(tty, buf, i+2); //final put call
 
 		
 
@@ -287,227 +276,10 @@ int
 tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 {
 	return -EINVAL;
-
-
-
-
-
-}
-
-/*
-*	helper function to parse the 32 bit arg
-*	INPUTS:
-*		arg -- the actual argument
-*		startByte -- the byte we want to start parsing at
-*		numBit -- the number of its we want to take from that byte
-*	RETUNTS:
-*		the new number we want
-*/
-
-int parser_helper_byByte(unsigned long arg, int startByte, int numBit)
-{
-	int holder;
-	int shift;
-	int bitmask;
-	int retVal;
-	shift = 8*(startByte -1);
-	holder = arg << shift;
-
-	if(numBit == 4)
-	{
-		bitmask = 0x000F; // 0xF = 1111
-	}
-	else if(numBit == 16)
-	{
-		bitmask = 0xFFFF; // 0xFFFF = 1111111111111111
-	}
-	else
-	{
-		bitmask = 0x0000;//else just make the whole thing zero
-	}
-
-	//bits with value 1 from arg will only register if the second argument of the '&' is a 1!
-	retVal = (arg << shift) & bitmask;
-	retVal = retVal >> numBit;//shift back over to the beginning of the new number!
-
-	return retVal;
-
-
-}
-
-int parser_helper_byBit(unsigned long arg, int startBit)
-{
-	int holder;
-	int shift;
-	int bitmask;
-	int retVal;
-	shift = 4*(startBit -1);
-	holder = arg << shift;
-
-	bitmask = 0xF;
-
-	//bits with value 1 from arg will only register if the second argument of the '&' is a 1!
-	retVal = (arg << shift) & bitmask;
-	retVal = retVal >> 4;//shift back over to the beginning of the new number!
-
-	return retVal;
-
-
 }
 
 
-/*
-	DEC bit determines if we need a decimal point after..
-	to add the decimal, just add 0x10
-*/
-int hex_to_seven(int LED_VAL, int DEC)
-{
 
-	//declare representations in 7 segment 
-	//calced by hand
-	//just add 0x10 if decimal is needed 
-	int seven_segments_rep[16];
-	seven_segments_rep[0] = 0xE7;
-	seven_segments_rep[1] = 0x06;
-	seven_segments_rep[2] = 0xCB;
-	seven_segments_rep[3] = 0x8F;
-	seven_segments_rep[4] = 0x28;
-	seven_segments_rep[5] = 0xAD;
-	seven_segments_rep[6] = 0xED;
-	seven_segments_rep[7] = 0x86;
-	seven_segments_rep[8] = 0xEF;
-	seven_segments_rep[9] = 0xAE;
-	seven_segments_rep[10] = 0xEE;//A
-	seven_segments_rep[11] = 0xEF;//B
-	seven_segments_rep[12] = 0xE1;//C
-	seven_segments_rep[13] = 0xE7;//D
-	seven_segments_rep[14] = 0xE9;//E
-	seven_segments_rep[15] = 0xEA;//F
-
-
-
-	if((DEC == 1))
-	{
-		switch(LED_VAL)
-		{
-				case 0x0: 
-					return seven_segments_rep[0] + 0x10;
-					break;
-				case 0x1:
-					return seven_segments_rep[1] + 0x10;
-					break;
-				case 0x2:
-					return seven_segments_rep[2] + 0x10;
-					break;
-				case 0x3:
-					return seven_segments_rep[3] + 0x10;
-					break;
-				case 0x4:
-					return seven_segments_rep[4] + 0x10;
-					break;
-				case 0x5:
-					return seven_segments_rep[5] + 0x10;
-					break;
-				case 0x6:
-					return seven_segments_rep[6] + 0x10;
-					break;
-				case 0x7:
-					return seven_segments_rep[7] + 0x10;
-					break;
-				case 0x8:
-					return seven_segments_rep[8] + 0x10;
-					break;
-				case 0x9:
-					return seven_segments_rep[9] + 0x10;
-					break;
-				case 0xA:
-					return seven_segments_rep[10] + 0x10;
-					break;
-				case 0xB:
-					return seven_segments_rep[11] + 0x10;
-					break;
-				case 0xC:
-					return seven_segments_rep[12] + 0x10;
-					break;
-				case 0xD:
-					return seven_segments_rep[13] + 0x10;
-					break;
-				case 0xE:
-					return seven_segments_rep[14] + 0x10;
-					break;
-				case 0xF:
-					return seven_segments_rep[15] + 0x10;
-					break;
-
-				default:
-	    			return -EINVAL;
-		}
-
-
-	}
-
-
-	else//DEC = 0
-	{
-		switch(LED_VAL)
-		{
-				case 0x0: 
-					return seven_segments_rep[0];
-					break;
-				case 0x1:
-					return seven_segments_rep[1];
-					break;
-				case 0x2:
-					return seven_segments_rep[2];
-					break;
-				case 0x3:
-					return seven_segments_rep[3];
-					break;
-				case 0x4:
-					return seven_segments_rep[4];
-					break;
-				case 0x5:
-					return seven_segments_rep[5];
-					break;
-				case 0x6:
-					return seven_segments_rep[6];
-					break;
-				case 0x7:
-					return seven_segments_rep[7];
-					break;
-				case 0x8:
-					return seven_segments_rep[8];
-					break;
-				case 0x9:
-					return seven_segments_rep[9];
-					break;
-				case 0xA:
-					return seven_segments_rep[10];
-					break;
-				case 0xB:
-					return seven_segments_rep[11];
-					break;
-				case 0xC:
-					return seven_segments_rep[12];
-					break;
-				case 0xD:
-					return seven_segments_rep[13];
-					break;
-				case 0xE:
-					return seven_segments_rep[14];
-					break;
-				case 0xF:
-					return seven_segments_rep[15];
-					break;
-
-				default:
-	    			return -EINVAL;
-		}
-
-	}
-	
-
-}
 /* WE NEED TO HANDLE RESETS ALRIGHT YEAH!!!!!
 *
 *
@@ -521,6 +293,6 @@ void tux_reset_helper(struct tty_struct * tty)
 	buf[1] = MTCP_LED_USR;
 	reset = 1;
 	tuxctl_ldisc_put(tty, buf, 2);//send it up!
-
+	return;
 	 
 }
