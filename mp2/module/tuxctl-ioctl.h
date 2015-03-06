@@ -60,7 +60,7 @@ extern int tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg);
 *	bit 0: start
 *
 */
-extern int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg);
+extern int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg);
 
 
 

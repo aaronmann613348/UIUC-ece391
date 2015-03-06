@@ -123,7 +123,7 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 	case TUX_BUTTONS:
 
-			return tuxctl_ioctl_tux_buttons(tty, arg);
+			return tuxctl_ioctl_tux_buttons(tty, &arg);
 			break;
 
 	case TUX_SET_LED: 
@@ -278,20 +278,88 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 int
 tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg)
 {
+	
 
-	int * holder = arg;
-	int num;
 
-	if(holder == NULL)
+	unsigned long  holder = *arg;//take value of arg and put it in holder
+	char buf[3];
+	int input;
+	int mask1;
+	int i;
+	int mask2;
+	char byte1[1];//array for  C B A S
+	char byte2[1];//array for  R D L U
+	int temp;
+
+	//first check for null pointer
+	if(arg == NULL)
 	{
 		return -EINVAL;
 	}
 
-	num = (holder >> 24) & BITMASK_full_byte;//get the 
 
 
+	mask1 = 0x01; //0000 0001
+	
+	input = (holder >> 24) & BITMASK_full_byte;//shift over to get the right bits
+
+	for(i = 0; i < 4; i++)
+	{
+		byte1[i] = (mask1 & input);
+		mask1 = mask1 << 1; 
+	}
+	//now flip the values for active low
+	for(i = 0; i < 4 ; i ++)
+	{
+		if(byte1[i] == 1)
+		{
+			byte1[i] = 0;
+		}
+		if(byte1[i] == 0)
+		{
+			byte1[i] = 1;
+		}
+	}
+	//byte 1 is good to go! 
+	buf[1] = *byte1;
 
 
+	//byte two is out of order so we need to flip the D and L
+	//input is R L D U, we want R D L U
+	//then do the same thing as above
+	//but make mask = 0xF0 so we have 1111 0000 to mask over
+	
+	mask2 = 0x10; // 0001 0000
+	for(i = 0; i < 4; i++)
+	{
+		byte2[i] = (mask2 & input);
+		mask2 = mask2 << 1; 
+	}
+	//now flip the values for active low
+	for(i = 0; i < 4 ; i ++)
+	{
+		if(byte2[i] == 1)
+		{
+			byte2[i] = 0;
+		}
+		if(byte2[i] == 0)
+		{
+			byte2[i] = 1;
+		}
+	}
+
+	//now flip byte2[1] and byte2[2]
+	temp = byte2[1];
+	byte2[1] = byte2[2];
+	byte2[2] = temp;
+
+
+	//byte 2 is good to go!
+	buf[2] = *byte2;
+	
+	buf[0] = MTCP_POLL_OK;
+	tuxctl_ldisc_put(tty, buf, 3);
+	return 0;
 
 
 
