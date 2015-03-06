@@ -29,7 +29,7 @@
 
 
 //gonna need these guys?
-static int buttons;
+static unsigned long buttons;
 static int LED; //used to make tux set led call in handle packet
 static int reset;//handy reset flag
 
@@ -72,14 +72,12 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
     			reset = 0;
     		}
     		break;
-/*
+
     	case MTCP_BIOC_EVENT:
-			//need the buttons!!!  ___ 	___
-								  |	|    | |
-								  |	  _\   |
-								  |	______ |
+			tuxctl_ioctl_tux_buttons(tty, &buttons);
     		break;
-*/
+
+
     	case MTCP_RESET: 
     		tux_reset_helper(tty);
     		break;
@@ -280,7 +278,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg)
 {
 	
 
-
+	
 	unsigned long  holder = *arg;//take value of arg and put it in holder
 	char buf[3];
 	int input;
@@ -297,7 +295,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg)
 		return -EINVAL;
 	}
 
-
+	buttons = *arg;//set buttons = value of arg for calling in handle_packet
 
 	mask1 = 0x01; //0000 0001
 	
