@@ -28,15 +28,15 @@
 
 
 
-//gonna need these guys
+//gonna need these guys?
 static int buttons;
-static int led;
-static int reset;
+static int LED; //used to make tux set led call in handle packet
+static int reset;//handy reset flag
 
 #define BITMASK_byte 0x0F//define bitmask 00001111
 #define BITMASK_fourbit 0xF //define bitmask 1111
 #define BITMASK_twobyte 0x000F//define bitmask 0000 0000 0000 1111
-
+#define BITMASK_full_byte 0xFF //11111111
 #define ADD_DEC 0x10//for seven segment rep.. decimal is on fourth most significant bit of seven seg representation
 
 
@@ -68,7 +68,7 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
     	case MTCP_ACK:
     		if(reset ==1)
     		{
-    			tuxctl_ioctl_tux_set_led(tty, led);
+    			tuxctl_ioctl_tux_set_led(tty, LED);
     			reset = 0;
     		}
     		break;
@@ -159,7 +159,8 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 	char buf[2];
 	reset = 0;
 	buttons = 0;
-	led = 0;
+	LED = 0;
+	
 	
 	buf[0] = MTCP_BIOC_ON;
 	buf[1] = MTCP_LED_USR;
@@ -195,9 +196,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	//holds opcode, which LEDS, and 4 hex values to be shown by LEDS
 
 	int LED_values[4]; // 4 bytes to hold the LED hex values we want
-	int holder1;
-	int holder2;
-	int holder3;
+	
 	int decimals_on;
 	int i;//index
 	int my_arg;//set so that we can hold arg and shift it around
@@ -206,16 +205,17 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	int shiftingMask; // 0000 0000 0000 1111
 	int oneMask; // 0001
 
+	LED = arg;//set LED = arg so we can use LED in the handle packet
 
 	oneMask = 0x1; 
 	shiftingMask = 0x000F;
-	my_arg = arg;
-	holder1 = my_arg >> 24;
-	decimals_on = (holder1 & BITMASK_byte);//first get a binary representation of which decimals are on using bitmask
 
-	holder2 = my_arg >> 16;//shift over 16 to check which LEDS on using bitmask  0000 1111
-	
-	buf[1] = (BITMASK_byte & holder2);//send these 8 bits to the second 'argument' of MTCP_LED_SET
+	my_arg = arg;
+
+	decimals_on = ((my_arg >> 24) & BITMASK_byte);//first get a binary representation of which decimals are on using bitmask
+
+	//shift over 16 to check which LEDS on using bitmask  0000 1111
+	buf[1] = (BITMASK_byte & my_arg >> 16);//send these 8 bits to the second 'argument' of MTCP_LED_SET
 
 	
 	
@@ -223,9 +223,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	//hold their binary representation in 4 bits
 	for(i = 0; i < 4 ; i++)
 	{
-		
-		holder3 = (shiftingMask & my_arg);//will this work?? not sure because of later values of my_arg
-		LED_values[i] = holder3;
+		LED_values[i] = (shiftingMask & my_arg);
 		shiftingMask = shiftingMask << 4;
 	}
 
@@ -259,7 +257,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 
 
 /*
-*	INPUT: 32 bit integer
+*	INPUT: 32 bit integer pointer
 *	returns -EINVAL error if this pointer is not valid
 *	otherwise, sets the bits of the low byte corresponding to the currently pressed buttons as follows:
 *	bit 7: right
@@ -270,12 +268,35 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 *	bit 2: b
 *	bit 1: a
 *	bit 0: start
+*	
+*	INPUT: struct tty_struct * tty, unsigned long arg
+*
+*
+*
 *
 */
 int
-tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
+tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg)
 {
-	return -EINVAL;
+
+	int * holder = arg;
+	int num;
+
+	if(holder == NULL)
+	{
+		return -EINVAL;
+	}
+
+	num = (holder >> 24) & BITMASK_full_byte;//get the 
+
+
+
+
+
+
+
+
+	
 }
 
 
@@ -288,10 +309,11 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 
 void tux_reset_helper(struct tty_struct * tty)
 {
+	//get ldisc_put ready for new input
 	char buf[2];
 	buf[0] = MTCP_BIOC_ON;
 	buf[1] = MTCP_LED_USR;
-	reset = 1;
+	reset = 1;//set reset flag
 	tuxctl_ldisc_put(tty, buf, 2);//send it up!
 	return;
 	 
