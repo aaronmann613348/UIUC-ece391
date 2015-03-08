@@ -554,7 +554,7 @@ show_status(int level, int fruit, int t)
     seconds = t%60;
     minutes = t/60;
    
-    if(fruit > 2 || fruit ==2)//need plural fruits in print statment
+    if(fruit >= 2 || fruit == 0)//need plural fruits in print statment
     {
     sprintf(str,"Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
     text_to_image(str);

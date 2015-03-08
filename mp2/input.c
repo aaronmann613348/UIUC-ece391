@@ -69,7 +69,7 @@
 static struct termios tio_orig;
 
 int fd;
-fd = 
+
 
 
 /* 
@@ -148,7 +148,7 @@ get_command (dir_t cur_dir)
     cmd_t command;
     int ch;
 
-    int button_pressed;
+   // int button_pressed;
 
     /*
      * If the direction of motion has changed, forget the last
@@ -188,48 +188,20 @@ get_command (dir_t cur_dir)
 	}
 #endif
     }
-        //THE TUX INPUT!!!!
-        if(ioctl(fd, TUX_BUTTONS, &button_pressed))
-        {
-            printf("need to fix stuff?\n");
-        }
-        switch(button_pressed)
-        {
-            case 0x01: 
-                pushed = DIR_STOP;
-                prev_cur = DIR_STOP;
-                break;
 
-            case 0x10:
-                pushed  = DIR_UP;
-                break;
-
-            case 0x20:
-                pushed = DIR_DOWN;
-                break;
-
-            case 0x40:
-                pushed  = DIR_LEFT;
-                break;
-
-            case 0x80: 
-                pushed = DIR_LEFT;
-                break;
-
-            default:
-                pushed = DIR_STOP;
-        }
 
     /*
      * Once a direction is pushed, that command remains active
      * until a turn is taken.
      */
+
     if (pushed == DIR_STOP)
 	command = TURN_NONE;
     else
 	command = (pushed - cur_dir + NUM_TURNS) % NUM_TURNS;
 
     return command;
+
 }
 
 /* 
@@ -257,11 +229,14 @@ shutdown_input ()
  *   RETURN VALUE: none 
  *   SIDE EFFECTS: changes state of controller's display
  */
+ 
 void
 display_time_on_tux (int num_seconds)
 {
 #if (USE_TUX_CONTROLLER != 0)
-#error "Tux controller code is not operational yet."
+//#error "Tux controller code is not operational yet."
+    
+
 #endif
 }
 
@@ -270,14 +245,7 @@ display_time_on_tux (int num_seconds)
 int
 main ()
 {   
-    fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
-    int ldisc_num = N_MOUSE;
-    ioctl(fd, TIOCSETD, &ldisc_num);
-    ioctl(fd, TUX_INIT_CONTROLLER, 0x00000000);
-    ioctl(fd, TUX_SET_LED, 0x030FABEF);
-    //tux_read_led();
-
-
+    
 
     cmd_t cmd;
     dir_t dir = DIR_UP;
@@ -294,18 +262,31 @@ main ()
 	return 3;
     }
 
+    fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+    int ldisc_num = N_MOUSE;
+    ioctl(fd, TIOCSETD, &ldisc_num);
     init_input ();
+    ioctl(fd, TUX_INIT);
+    ioctl(fd, TUX_SET_LED, 0x030FABEF);
+
+
     while (1) {
 	printf ("CURRENT DIRECTION IS %s\n", dir_names[dir]);
         while ((cmd = get_command (dir)) == TURN_NONE);
 	if (cmd == CMD_QUIT)
 	    break;
-	display_time_on_tux (83);
+	display_time_on_tux (1800);
 	printf ("%s\n", cmd_name[cmd]);
+
 	dir = (dir + cmd) % 4;
     }
     shutdown_input ();
     return 0;
+
+
 }
 #endif
+
+
+
 

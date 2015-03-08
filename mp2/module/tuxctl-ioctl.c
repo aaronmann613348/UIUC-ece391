@@ -32,7 +32,8 @@ static unsigned char * array;//global array to read stuff in for buttons
 
 
 static int reset;//handy reset flag
-static unsigned long LED;
+static int flag_for_spamming;
+
 static unsigned long buttons;
 
 #define BITMASK_byte 0x0F//define bitmask 00001111
@@ -45,7 +46,8 @@ static unsigned long buttons;
 
 
 #define debug(str, ...) \
-	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
+	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__);
+
 
 
 //local function declarations:
@@ -116,13 +118,18 @@ void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
     {
     	case MTCP_ACK:
     		printk("check initialized");
+    		flag_for_spamming = 0;
     		break;
 
     	case MTCP_BIOC_EVENT:
 			
 			array[0] = b;
 			array[1] = c;
+
 			
+
+
+
     		break;
 
 
@@ -168,6 +175,10 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 
 	case TUX_BUTTONS:
+			if((int*)arg == NULL)
+			{
+				return -EINVAL;
+			}
 	
 
 			return tuxctl_ioctl_tux_buttons(tty, arg);
@@ -175,10 +186,17 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 	case TUX_SET_LED: 
 
-			return tuxctl_ioctl_tux_set_led(tty, arg);
+			if(flag_for_spamming == 0)
+			{
+				flag_for_spamming = 1;
+				return tuxctl_ioctl_tux_set_led(tty, arg);
+			}
+
+			return 0;
 			
 
 	case TUX_LED_ACK:
+
 
 			//don't need to implement
 			return 0;
@@ -186,6 +204,7 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 	case TUX_LED_REQUEST:
 
 			//dont need to implement
+			return 0;
 
 	case TUX_READ_LED:
 
@@ -208,7 +227,9 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 	char buf[2];
 	reset = 0;
 	buttons = 0;
-	LED = 0;
+	flag_for_spamming = 0;
+
+	
 	
 	
 	buf[0] = MTCP_BIOC_ON;
@@ -216,7 +237,7 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 	
 	
 	tuxctl_ldisc_put(tty, buf, 2);//send this up to tux
-	printk("check initialized");
+	//printk("check initialized\n");
 	return 0;
 
 }
@@ -240,8 +261,8 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 
 
 	
-	char buf[6];// 6 bytes; what we'll be sending to the TUX
-	char seven_seg[16] = {0xE7, 0x06,  0xCB, 0x8F, 0x28, 0xAD, 0xED, 0x86, 0xEF, 0xAE, 0xEE, 0xEF, 0xE1, 0xE7, 0xE9, 0xEA};
+	unsigned char buf[6];// 6 bytes; what we'll be sending to the TUX
+	int seven_seg[16] = {0xE7, 0x06,  0xCB, 0x8F, 0x28, 0xAD, 0xED, 0x86, 0xEF, 0xAE, 0xEE, 0xEF, 0xE1, 0xE7, 0xE9, 0xEA};
 	//holds opcode, which LEDS, and 4 hex values to be shown by LEDS
 
 	int LED_values[4]; // 4 bytes to hold the LED hex values we want
@@ -254,10 +275,14 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	int shiftingMask; // 0000 0000 0000 1111
 	int oneMask; // 0001
 
-	LED = arg;//set LED = arg so we can use LED in the handle packet
+	
 
 	oneMask = 0x1; 
 	shiftingMask = 0x000F;
+
+
+	//printk("%x\n", shiftingMask);
+
 
 	my_arg = arg;
 
@@ -266,20 +291,22 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	//shift over 16 to check which LEDS on using bitmask  0000 1111
 	buf[1] = (BITMASK_byte & my_arg >> 16);//send these 8 bits to the second 'argument' of MTCP_LED_SET
 
-	
-	
+	//printk(" buf[1] is %x \n" , buf[1]);
 	//populate array of 8 bit LED values
 	//hold their binary representation in 4 bits
 	for(i = 0; i < 4 ; i++)
 	{
 		LED_values[i] = (shiftingMask & my_arg);
-		shiftingMask = shiftingMask << 4;
+		my_arg = my_arg >> 4;//shift the argument over 4 bits
 	}
 
 	//argument should be fully parsed by now
 	//now we need to convert hex to seven segment and account for decimal point
-	
-	
+	for(i  = 0; i < 4 ; i++)
+	{
+		printk(" LED%d value is : %x \n" , i, LED_values[i]);
+	}
+
 	for(i = 0; i < 4 ; i++)
 	{
 		if(decimals_on & oneMask)
@@ -290,8 +317,15 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 		{
 			buf[i+2] = seven_seg[LED_values[i]];
 		}
-		oneMask = oneMask << 1;//shift one mask over!
+		decimals_on = decimals_on >> 1; //shift the decimal_on 4 over 1 bit!
 	}
+	printk(" buf[1] is %x \n" , buf[1]);
+	printk(" buf[2] is in seven_seg is %x \n" , buf[2]);
+	printk(" buf[3] is in seven_seg is %x \n" , buf[3]);
+	printk(" buf[4] is in seven_seg is %x \n" , buf[4]);
+	printk(" buf[5] is in seven_seg is %x \n" , buf[5]);
+
+
 
 
 	//we need to set up buf and figure out what the int n arg will be here
@@ -366,10 +400,10 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 		bitmask = bitmask >> 1;
 	}
 
-	buttons = (unsigned long*)holder;
+	buttons = (unsigned long)holder;
 
 
-	copy_to_user((long*)arg, (long*)holder, sizeof(long));
+	copy_to_user((long*)arg, &buttons, sizeof(long));
 	
 	return 0;
 }
