@@ -58,6 +58,9 @@
 #define RIGHT 67
 #define LEFT 68
 
+ #include "module/tuxctl-ioctl.h"
+ #include <termio.h>
+
 
 /*
  * If NDEBUG is not defined, we execute sanity checks to make sure that
@@ -76,6 +79,8 @@ static int sanity_check ();
 
 /* outcome of each level, and of the game as a whole */
 typedef enum {GAME_WON, GAME_LOST, GAME_QUIT} game_condition_t;
+
+int fe; //global for tux i/o
 
 
 /* structure used to hold game information */
@@ -104,6 +109,7 @@ static void move_left (int* xpos);
 static int unveil_around_player (int play_x, int play_y);
 static void *rtc_thread(void *arg);
 static void *keyboard_thread(void *arg);
+static void *tux_thread(void *arg);
 
 
 /* 
@@ -350,6 +356,56 @@ int fd;
 unsigned long data;
 static struct termios tio_orig;
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+
+/*
+ * TUX_thread
+ *   DESCRIPTION: Thread that handles TUX inputs
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: none
+ */
+
+static void *tux_thread(void *arg)
+{
+	unsigned long button;
+	
+	while (winner == 0)
+	{		
+		
+		
+		if(quit_flag == 1 || winner ==1) 
+		{
+
+			return 0; //game over
+		}
+
+				//ioctl(fd, TUX_BUTTONS, &button);//get TUX INPUT
+				pthread_mutex_lock(&mtx);
+				switch(button)
+				{
+					case 0x10:
+						next_dir = DIR_UP;
+						break;
+					case 0x20:
+						next_dir = DIR_DOWN;
+						break;
+					case 0x40:
+						next_dir = DIR_RIGHT;
+						break;
+					case 0x80:
+						next_dir = DIR_LEFT;
+						break;
+					default:
+						break;
+				}
+				pthread_mutex_unlock(&mtx);
+
+	}
+
+	return 0;
+}
+
 
 
 /*
@@ -640,14 +696,25 @@ int main()
 
 	pthread_t tid1;
 	pthread_t tid2;
-
+	pthread_t tid3;
+	int ldisc_num;
 	// Initialize RTC
 	fd = open("/dev/rtc", O_RDONLY, 0);
+	
+
 	
 	// Enable RTC periodic interrupts at update_rate Hz
 	// Default max is 64...must change in /proc/sys/dev/rtc/max-user-freq
 	ret = ioctl(fd, RTC_IRQP_SET, update_rate);	
 	ret = ioctl(fd, RTC_PIE_ON, 0);
+
+
+	//initialize TUX
+	fe = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	ldisc_num = N_MOUSE;
+	ioctl(fe, TIOCSETD, &ldisc_num);
+	ioctl(fe, TUX_INIT, 0x00000000);
+
 
 	// Initialize Keyboard
 	// Turn on non-blocking mode
@@ -686,10 +753,12 @@ int main()
 	// Create the threads
 	pthread_create(&tid1, NULL, rtc_thread, NULL);
 	pthread_create(&tid2, NULL, keyboard_thread, NULL);
+	pthread_create(&tid3, NULL, tux_thread, NULL);
 	
 	// Wait for all the threads to end
 	pthread_join(tid1, NULL);
 	pthread_join(tid2, NULL);
+	pthread_join(tid3, NULL);
 
 	// Shutdown Display
 	clear_mode_X();
@@ -700,14 +769,17 @@ int main()
 	// Close RTC
 	close(fd);
 
+	//close TUX
+	close(fe);
+
 	// Print outcome of the game
 	if (winner == 1)
 	{	
-		printf ("You win the game!  CONGRATULATIONS!\n");
+		printf ("You win the game!  CONGRATULATIONS! go do something with your life!\n");
 	}
 	else if (quit_flag == 1)
 	{
-		printf ("Quitter!\n");
+		printf ("Quitter BUT GOOD TRY!!\n");
 	}
 	else
 	{

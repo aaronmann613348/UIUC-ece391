@@ -52,16 +52,24 @@
 #include "input.h"
 #include "maze.h"
 
+ //need to add some more includes?
+#include "module/tuxctl-ioctl.h"
+
+
+
 
 /* set to 1 and compile this file by itself to test functionality */
 #define TEST_INPUT_DRIVER 1
 
 /* set to 1 to use tux controller; otherwise, uses keyboard input */
-#define USE_TUX_CONTROLLER 0
+#define USE_TUX_CONTROLLER 1
 
 
 /* stores original terminal settings */
 static struct termios tio_orig;
+
+int fd;
+fd = 
 
 
 /* 
@@ -111,6 +119,7 @@ init_input ()
 	perror ("tcsetattr to set stdin terminal settings");
 	return -1;
     }
+    
 
     /* Return success. */
     return 0;
@@ -138,6 +147,8 @@ get_command (dir_t cur_dir)
 #endif
     cmd_t command;
     int ch;
+
+    int button_pressed;
 
     /*
      * If the direction of motion has changed, forget the last
@@ -177,6 +188,37 @@ get_command (dir_t cur_dir)
 	}
 #endif
     }
+        //THE TUX INPUT!!!!
+        if(ioctl(fd, TUX_BUTTONS, &button_pressed))
+        {
+            printf("need to fix stuff?\n");
+        }
+        switch(button_pressed)
+        {
+            case 0x01: 
+                pushed = DIR_STOP;
+                prev_cur = DIR_STOP;
+                break;
+
+            case 0x10:
+                pushed  = DIR_UP;
+                break;
+
+            case 0x20:
+                pushed = DIR_DOWN;
+                break;
+
+            case 0x40:
+                pushed  = DIR_LEFT;
+                break;
+
+            case 0x80: 
+                pushed = DIR_LEFT;
+                break;
+
+            default:
+                pushed = DIR_STOP;
+        }
 
     /*
      * Once a direction is pushed, that command remains active
@@ -227,7 +269,16 @@ display_time_on_tux (int num_seconds)
 #if (TEST_INPUT_DRIVER == 1)
 int
 main ()
-{
+{   
+    fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+    int ldisc_num = N_MOUSE;
+    ioctl(fd, TIOCSETD, &ldisc_num);
+    ioctl(fd, TUX_INIT_CONTROLLER, 0x00000000);
+    ioctl(fd, TUX_SET_LED, 0x030FABEF);
+    //tux_read_led();
+
+
+
     cmd_t cmd;
     dir_t dir = DIR_UP;
     static const char* const cmd_name[NUM_TURNS] = {

@@ -28,10 +28,12 @@
 
 
 
-//gonna need these guys?
-static unsigned long buttons;
-static int LED; //used to make tux set led call in handle packet
+static unsigned char * array;//global array to read stuff in for buttons
+
+
 static int reset;//handy reset flag
+static unsigned long LED;
+static unsigned long buttons;
 
 #define BITMASK_byte 0x0F//define bitmask 00001111
 #define BITMASK_fourbit 0xF //define bitmask 1111
@@ -46,6 +48,53 @@ static int reset;//handy reset flag
 	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
 
 
+//local function declarations:
+/*
+*	INPUTs: struct******
+*	initializes vaiables associated with the driver 
+*
+*/
+int tuxctl_ioctl_tux_init (struct tty_struct* tty);
+
+
+/*	INPUT: 32 bit integer
+*	
+*
+*	low 16 bits (15:0) specify a number whos hex value is displayed on the 7 segment displays
+*	low 4 bits of the third byte (19:16) specify which LEDs should be on
+*	lwo 4 bits of the highest byte (27:24) specify whether the corresponding decimal points should be turned on
+
+*/
+int tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg);
+
+
+
+/*
+*	INPUT: 32 bit integer
+*	returns -EINVAL error if this pointer is not valid
+*	otherwise, sets the bits of the low byte corresponding to the currently pressed buttons as follows:
+*	bit 7: right
+*	bit 6: left
+*	bit 5: down
+*	bit 4: up
+*	bit 3: c
+*	bit 2: b
+*	bit 1: a
+*	bit 0: start
+*
+*/
+int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg);
+
+
+
+/*
+ *
+ *	Reset Handler
+ */
+ void tux_reset_helper(struct tty_struct* tty);
+
+
+
 
 
 /************************ Protocol Implementation *************************/
@@ -55,9 +104,9 @@ static int reset;//handy reset flag
  * tuxctl-ld.c. It calls this function, so all warnings there apply 
  * here as well.
  */
-void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
+void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
 {
-    unsigned a, b, c;
+    unsigned  a, b, c;
 
     a = packet[0]; /* Avoid printk() sign extending the 8-bit */
     b = packet[1]; /* values when printing them. */
@@ -66,15 +115,14 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* packet)
     switch(a)
     {
     	case MTCP_ACK:
-    		if(reset ==1)
-    		{
-    			tuxctl_ioctl_tux_set_led(tty, LED);
-    			reset = 0;
-    		}
+    		printk("check initialized");
     		break;
 
     	case MTCP_BIOC_EVENT:
-			tuxctl_ioctl_tux_buttons(tty, &buttons);
+			
+			array[0] = b;
+			array[1] = c;
+			
     		break;
 
 
@@ -115,23 +163,25 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 	case TUX_INIT:
 
-			tuxctl_ioctl_tux_init(tty);
-			return 0;
+			return tuxctl_ioctl_tux_init(tty);
+			
 
 
 	case TUX_BUTTONS:
+	
 
-			return tuxctl_ioctl_tux_buttons(tty, &arg);
-			break;
+			return tuxctl_ioctl_tux_buttons(tty, arg);
+			
 
 	case TUX_SET_LED: 
 
 			return tuxctl_ioctl_tux_set_led(tty, arg);
-			break;
+			
 
 	case TUX_LED_ACK:
 
 			//don't need to implement
+			return 0;
 
 	case TUX_LED_REQUEST:
 
@@ -140,6 +190,7 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 	case TUX_READ_LED:
 
 			//don't need to implement
+			return 0;
 
 	default:
 	    return -EINVAL;
@@ -163,7 +214,7 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 	buf[0] = MTCP_BIOC_ON;
 	buf[1] = MTCP_LED_USR;
 	
-
+	
 	tuxctl_ldisc_put(tty, buf, 2);//send this up to tux
 	printk("check initialized");
 	return 0;
@@ -274,95 +325,53 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 *
 */
 int
-tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long * arg)
+tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 {
-	
-
-	
-	unsigned long  holder = *arg;//take value of arg and put it in holder
-	char buf[3];
-	int input;
-	int mask1;
 	int i;
-	int mask2;
-	char byte1[1];//array for  C B A S
-	char byte2[1];//array for  R D L U
-	int temp;
+	int bitmask;
+	char holder[8];
+	char temp;
 
-	//first check for null pointer
-	if(arg == NULL)
-	{
-		return -EINVAL;
-	}
+	unsigned long temp1;//holder for C B A S
+	unsigned long temp2;//holder for R L D U
 
-	buttons = *arg;//set buttons = value of arg for calling in handle_packet
+	temp1 = array[0]; // X X X X C B A S ---> C B A S
+	temp2 = array[1]; // X X X X R D L U ---> R D L U
+	temp1 = (temp1 & 0x0F);//C B A S
+	temp2 = (temp2 & 0x0F);//R D L U
 
-	mask1 = 0x01; //0000 0001
-	
-	input = (holder >> 24) & BITMASK_full_byte;//shift over to get the right bits
 
-	for(i = 0; i < 4; i++)
-	{
-		byte1[i] = (mask1 & input);
-		mask1 = mask1 << 1; 
-	}
-	//now flip the values for active low
+	bitmask = 0x1; // 0001
+
+
+	//need to flip D and L in array 1
+	//then, combine array[1] and array[0] and store in buff
+	//so that buff[0] = R L D U C B A S
+
+	//make the flip
 	for(i = 0; i < 4 ; i ++)
 	{
-		if(byte1[i] == 1)
-		{
-			byte1[i] = 0;
-		}
-		if(byte1[i] == 0)
-		{
-			byte1[i] = 1;
-		}
+		holder[i] = (temp2 & bitmask);
+		bitmask = bitmask << 1;
 	}
-	//byte 1 is good to go! 
-	buf[1] = *byte1;
+	//flip the L and the D!
+	temp = holder[2];
+	holder[2] = holder[1];
+	holder[1] = temp;
 
-
-	//byte two is out of order so we need to flip the D and L
-	//input is R L D U, we want R D L U
-	//then do the same thing as above
-	//but make mask = 0xF0 so we have 1111 0000 to mask over
-	
-	mask2 = 0x10; // 0001 0000
-	for(i = 0; i < 4; i++)
+	//now fill in the other 8 bits of holder with C B A S 
+	for(i = 4; i < 8; i++)
 	{
-		byte2[i] = (mask2 & input);
-		mask2 = mask2 << 1; 
-	}
-	//now flip the values for active low
-	for(i = 0; i < 4 ; i ++)
-	{
-		if(byte2[i] == 1)
-		{
-			byte2[i] = 0;
-		}
-		if(byte2[i] == 0)
-		{
-			byte2[i] = 1;
-		}
+		holder[i] = (temp1 & bitmask);
+		bitmask = bitmask >> 1;
 	}
 
-	//now flip byte2[1] and byte2[2]
-	temp = byte2[1];
-	byte2[1] = byte2[2];
-	byte2[2] = temp;
+	buttons = (unsigned long*)holder;
 
 
-	//byte 2 is good to go!
-	buf[2] = *byte2;
+	copy_to_user((long*)arg, (long*)holder, sizeof(long));
 	
-	buf[0] = MTCP_POLL_OK;
-	tuxctl_ldisc_put(tty, buf, 3);
 	return 0;
-
-
-
-
-	
 }
 
 
@@ -381,6 +390,7 @@ void tux_reset_helper(struct tty_struct * tty)
 	buf[1] = MTCP_LED_USR;
 	reset = 1;//set reset flag
 	tuxctl_ldisc_put(tty, buf, 2);//send it up!
+
 	return;
 	 
 }
