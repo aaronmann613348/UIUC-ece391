@@ -38,6 +38,7 @@
 
 
 #include "text.h"
+#include "blocks.h"
 
 
 /* 
@@ -53,8 +54,19 @@
 #define IMAGE_Y_DIM     200   /* pixels                                     */
 #define IMAGE_X_WIDTH   (IMAGE_X_DIM / 4)          /* addresses (bytes)     */
 #define SCROLL_X_DIM	IMAGE_X_DIM                /* full image width      */
-#define SCROLL_Y_DIM    IMAGE_Y_DIM                /* full image width      */
+#define SCROLL_Y_DIM    182         			/* full image width      */ //IMAGE_Y_DIM
 #define SCROLL_X_WIDTH  (IMAGE_X_DIM / 4)          /* addresses (bytes)     */
+#define ONEFOURFOUR 	144 /*backgroudn for mask constant to avoid magic numer*/
+#define DIM1 8
+#define DIM2 240
+#define strlength   160
+
+
+
+extern unsigned char buf_text[DIM1][DIM2];
+extern unsigned char buf_back[DIM1][DIM2]; 
+//global str
+char str[strlength];
 
 
 /*
@@ -127,6 +139,12 @@ extern void set_view_window (int scr_x, int scr_y);
 /* show the logical view window on the monitor */
 extern void show_screen ();
 
+
+
+/*
+	function that displays the status bar witht he appropriate time, number of fruits and colors ad levels
+	takes inputs ad described above ad gets called in mazegame.c
+*/
 extern void show_status(int level, int fruit, int time,  unsigned char color1, unsigned char color2);
 
 /* clear the video memory in mode X */
@@ -145,7 +163,7 @@ extern void draw_full_block (int pos_x, int pos_y, unsigned char* blk);
 extern void draw_masking_block(int pos_x, int pos_y, unsigned char * blk , unsigned char * masking, unsigned char * background);
 
 //global background array
-unsigned char background_formask[144];
+unsigned char background_formask[ONEFOURFOUR];
 
 /* draw a horizontal line at vertical pixel y within the logical view window */
 extern int draw_horiz_line (int y);
@@ -158,8 +176,38 @@ extern int draw_vert_line (int x);
 	Make the player glow by setting an event loop changing the players center color
 	also make the maze walls and status bar change color witht the level. 10 levels, so pick some colors
 	create floating semi transparent text
+	type: 1 for wall
+      2 for player
+      3 for fill
 
 */
-extern void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b);
+extern void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b, int type);
+
+/*
+	functiont to create the image of text when a fruit gets picked up
+	uses a switch case based on the number each fruit is defied by in blocks.s
+	writes the statemet to global strig str
+*/
+extern void find_text(int type);
+
+
+/*
+	function which displays text when a fruit is picked up
+	changes use font dim ad string length	
+	modification from draw full block used in 2.1 but we use font height and width
+s
+*/
+
+extern void draw_full_block_for_fruit (int pos_x, int pos_y,  char* blk);
+
+
+/*
+	function that fills in the background after the text gets displayed
+	this is basically just te same thig as draw maskig block
+	changes use font dim ad string length	
+	modification from draw full masking block used in 2.1 but we use font height and width
+*/
+extern void draw_text_mask(int pos_x, int pos_y,  char * blk, char * masking, char * background);
+
 
 #endif /* MODEX_H */

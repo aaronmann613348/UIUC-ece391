@@ -81,6 +81,8 @@ static int sanity_check ();
 typedef enum {GAME_WON, GAME_LOST, GAME_QUIT} game_condition_t;
 
 int fe; //global for tux i/o
+int float_counter;
+int fruit_type;
 
 
 /* structure used to hold game information */
@@ -303,9 +305,10 @@ unveil_around_player (int play_x, int play_y)
     int x = play_x / BLOCK_X_DIM; /* player's maze lattice position */
     int y = play_y / BLOCK_Y_DIM;
     int i, j;   /* loop indices for unveiling maze squares */
+  
 
     /* Check for fruit at the player's position. */
-    (void)check_for_fruit (x, y);
+    fruit_type = check_for_fruit (x, y);
 
     /* Unveil spaces around the player. */
     for (i = -1; i < 2; i++)
@@ -602,6 +605,7 @@ static void *rtc_thread(void *arg)
 		#define WALL_FILL_COLOR     0x22
 
 */
+		
 		int r_fill;
 		int g_fill;
 		int b_fill;
@@ -613,6 +617,8 @@ static void *rtc_thread(void *arg)
 		int b_center;
 		int random_color1;
 		int random_color2;
+		int status_back[10] = {0x01, 0x02,0x03, 0x04, 0x05,  0x06, 0x07, 0x08, 0x09, 0x0A};
+		int status_letters[10] = {0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01};
 
 		r_fill = rand()%50;
 		g_fill = rand()%50;
@@ -621,11 +627,12 @@ static void *rtc_thread(void *arg)
 		b_outline = rand()%50;
 		g_outline = rand()%50;
 		
-		random_color1 = rand()%50;
-		random_color2 = rand()%50;
-
-		set_pallet_color(WALL_FILL_COLOR, r_fill, g_fill, b_fill);
-		set_pallet_color(WALL_OUTLINE_COLOR, r_outline, g_outline, b_outline);
+		
+			random_color1 = status_back[level];
+			random_color2 = status_letters[level];
+		
+		set_pallet_color(WALL_FILL_COLOR, r_fill, g_fill, b_fill, 3);
+		set_pallet_color(WALL_OUTLINE_COLOR, r_outline, g_outline, b_outline, 1);
 
 		
 
@@ -652,8 +659,11 @@ static void *rtc_thread(void *arg)
 			
 
 			
-			show_status(level, fruit, difference, random_color1, random_color2);//add spinlock? //also lock tux thread
-			set_pallet_color(PLAYER_CENTER_COLOR, r_center, g_center, b_center);
+			show_status(level, fruit, difference, random_color1, random_color2);
+
+
+			//add spinlock? //also lock tux thread
+			set_pallet_color(PLAYER_CENTER_COLOR, r_center, g_center, b_center, 2);
 			r_center = rand()%50;
 			g_center = rand()%50;
 			b_center = rand()%50;
@@ -769,6 +779,20 @@ static void *rtc_thread(void *arg)
 					//bug exists here! for when it runs into the wall. need to add an if()
 				}
 			}
+/*			float_counter = (32*5);
+			if(float_counter > 0)
+			{	
+				old_x = play_x;
+				old_y = play_y;
+				find_text(fruit_type);
+				draw_text_mask(play_x, play_y, get_player_block(last_dir), get_player_block(last_dir), str);
+				show_screen();
+				draw_full_block_for_fruit(old_x, old_y, str);
+				draw_full_block(old_x, old_y, str);	
+				float_counter--; 
+			}
+
+*/
 			if (1) //always redraw! instead of new if(), just change the old if(redraw)
 			{
 				old_x = play_x;

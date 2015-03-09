@@ -46,6 +46,7 @@
 #include "blocks.h"
 #include "modex.h"
 #include "text.h"
+#include "blocks.h"
 
 
 /* 
@@ -83,6 +84,7 @@
 
 
 
+
 /* VGA register settings for mode X */
 static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
     0x0100, 0x2101, 0x0F02, 0x0003, 0x0604
@@ -91,7 +93,7 @@ static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
     0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
     0x0008, 0x0109, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,//changed 0x4109 to 0X0109
     0x9C10, 0x8E11, 0x8F12, 0x2813, 0x0014, 0x9615, 0xB916, 0xE317,
-    0x6E18 //changed OxFF18 to 0x6E18
+    0x6B18 //changed OxFF18 to 0x6E18
 };
 static unsigned char mode_X_attr[NUM_ATTR_REGS * 2] = {
     0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 
@@ -550,7 +552,7 @@ show_status(int level, int fruit, int t, unsigned char color1, unsigned char col
 
     int seconds;
     int minutes;
-    char str[160];//holder sting for sprintf statement
+    char str[strlength];//holder sting for sprintf statement
 
     //holders for time
     seconds = t%60;
@@ -883,17 +885,246 @@ draw_horiz_line (int y)
   also make the maze walls and status bar change color witht the level. 10 levels, so pick some colors
   create floating semi transparent text
 
+type: 1 for outline
+      2 for player
+      3 for fill
 */
-extern void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
+void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b, int type)
 {
-  OUTB(0x3C6, 0xFF);
-  OUTB(0x3C8, color);
-  OUTB(0x3C9, r);
-  OUTB(0x3C9, g);
-  OUTB(0x3C9, b);
+
+  if(type ==1)
+  {
+    OUTB(0x3C6, 0xFF);
+
+  }
+  else if(type == 2)
+  {
+    OUTB(0x3C6, 0x21);
+  }
+  else
+  {
+    OUTB(0x3C6, 0x31);
+  }
+
+
+    OUTB(0x3C8, color);
+    OUTB(0x3C9, r);
+    OUTB(0x3C9, g);
+    OUTB(0x3C9, b);
+}
+
+
+/*
+  functiont to create the image of text when a fruit gets picked up
+  uses a switch case based on the number each fruit is defied by in blocks.s
+  writes the statemet to global strig str
+*/
+ void find_text(int fruit)
+{
+
+      switch(fruit)
+      {
+          case 1:
+              sprintf(str, "an apple!");
+              break;
+          case 2:
+              sprintf(str, "a grape!");
+              break;
+          case 3:
+              sprintf(str, "a peach!");
+              break;
+          case 4:
+              sprintf(str, "a strawberry!");
+              break;
+          case 5:
+              sprintf(str, "a banana!");
+              break;
+          case 6:
+              sprintf(str, "a watermellon!");
+              break;
+          case 7:
+              sprintf(str, "a dew!");
+              break;
+          default:
+              break;
+
+    }
 
 
 }
+
+
+/*
+  function which displays text when a fruit is picked up
+  pass in str where blk is 
+
+  function which displays text when a fruit is picked up
+  changes use font dim ad string length 
+  modification from draw full block used in 2.1 but we use font height and width
+*/
+void 
+draw_full_block_for_fruit (int pos_x, int pos_y, char* blk)
+{
+
+   int dx, dy;          /* loop indices for x and y traversal of block */
+    int x_left, x_right; /* clipping limits in horizontal dimension     */
+    int y_top, y_bottom; /* clipping limits in vertical dimension       */
+
+    /* If block is completely off-screen, we do nothing. */
+    if (pos_x + FONT_WIDTH <= show_x || pos_x >= show_x + SCROLL_X_DIM ||
+        pos_y + FONT_HEIGHT <= show_y || pos_y >= show_y + SCROLL_Y_DIM)
+  return;
+   
+    /* Clip any pixels falling off the left side of screen. */
+    if ((x_left = show_x - pos_x) < 0)
+        x_left = 0;
+    /* Clip any pixels falling off the right side of screen. */
+    if ((x_right = show_x + SCROLL_X_DIM - pos_x) > FONT_WIDTH)
+        x_right = FONT_WIDTH;
+    /* Skip the first x_left pixels in both screen position and block data. */
+    pos_x += x_left;
+    blk += x_left;
+    /* 
+     * Adjust x_right to hold the number of pixels to be drawn, and x_left
+     * to hold the amount to skip between rows in the block, which is the
+     * sum of the original left clip and (FONT_WIDTH - the original right 
+     * clip).
+     */
+    x_right -= x_left;
+    x_left = FONT_WIDTH - x_right; 
+
+    /* Clip any pixels falling off the top of the screen. */
+    if ((y_top = show_y - pos_y) < 0)
+        y_top = 0;
+    /* Clip any pixels falling off the bottom of the screen. */
+    if ((y_bottom = show_y + SCROLL_Y_DIM - pos_y) > FONT_HEIGHT)
+        y_bottom = FONT_HEIGHT;
+    /* 
+     * Skip the first y_left pixel in screen position and the first
+     * y_left rows of pixels in the block data.
+     */
+    pos_y += y_top;
+    blk += y_top * FONT_WIDTH;
+    /* Adjust y_bottom to hold the number of pixel rows to be drawn. */
+    y_bottom -= y_top;
+
+    /* Draw the clipped image. */
+    for (dy = 0; dy < y_bottom; dy++, pos_y++) {
+  for (dx = 0; dx < x_right; dx++, pos_x++, blk++)
+      *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +
+        (3 - (pos_x & 3)) * SCROLL_SIZE) = *blk;
+  pos_x -= x_right;
+  blk += x_left;
+    }
+}
+
+
+
+
+
+/*
+  function that fills in the background after the text gets displayed
+  this is basically just te same thig as draw maskig block
+
+  function that fills in the background after the text gets displayed
+  this is basically just te same thig as draw maskig block
+  changes use font dim ad string length 
+  modification from draw full masking block used in 2.1 but we use font height and widt
+  
+*/
+void draw_text_mask(int pos_x, int pos_y,   char * blk, char * masking, char * background)
+{
+   background = (char*)background_formask; //using global array defined in modex.h
+
+
+
+    int dx, dy;          /* loop indices for x and y traversal of block */
+    int x_left, x_right; /* clipping limits in horizontal dimension     */
+    int y_top, y_bottom; /* clipping limits in vertical dimension       */
+
+
+    /* If block is completely off-screen, we do nothing. */
+    if (pos_x + FONT_WIDTH <= show_x || pos_x >= show_x + SCROLL_X_DIM ||
+        pos_y + FONT_HEIGHT <= show_y || pos_y >= show_y + SCROLL_Y_DIM)
+  return;
+   
+    /* Clip any pixels falling off the left side of screen. */
+    if ((x_left = show_x - pos_x) < 0)
+        x_left = 0;
+    /* Clip any pixels falling off the right side of screen. */
+    if ((x_right = show_x + SCROLL_X_DIM - pos_x) > FONT_WIDTH)
+        x_right = FONT_WIDTH;
+    /* Skip the first x_left pixels in both screen position and block data. */
+    pos_x += x_left;
+    blk += x_left;
+    /* 
+     * Adjust x_right to hold the number of pixels to be drawn, and x_left
+     * to hold the amount to skip between rows in the block, which is the
+     * sum of the original left clip and (FONT_WIDTH - the original right 
+     * clip).
+     */
+    x_right -= x_left;
+    x_left = FONT_WIDTH - x_right; 
+
+    /* Clip any pixels falling off the top of the screen. */
+    if ((y_top = show_y - pos_y) < 0)
+        y_top = 0;
+    /* Clip any pixels falling off the bottom of the screen. */
+    if ((y_bottom = show_y + SCROLL_Y_DIM - pos_y) > FONT_HEIGHT)
+        y_bottom = FONT_HEIGHT;
+    /* 
+     * Skip the first y_left pixel in screen position and the first
+     * y_left rows of pixels in the block data.
+     */
+    pos_y += y_top;
+    blk += y_top * FONT_WIDTH;
+    /* Adjust y_bottom to hold the number of pixel rows to be drawn. */
+    y_bottom -= y_top;
+
+    /* Draw the clipped image. */
+    for (dy = 0; dy < y_bottom; dy++, pos_y++)
+    {
+
+      for (dx = 0; dx < x_right; dx++, pos_x++, blk++, masking++, background++)
+      {
+
+        
+        *background = *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE);//fill color
+         
+        if(*masking == 1) //check if pixels are copied from player image
+        {
+           *(img3 + (pos_x >> 2) + pos_y * SCROLL_X_WIDTH +(3 - (pos_x & 3)) * SCROLL_SIZE) = *blk;//player position 
+        }
+
+            
+      }
+            //incrememnt appropriately
+            pos_x -= x_right;
+            blk += x_left;
+            masking += x_left;
+            background += x_left;
+           
+  }
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1215,7 +1446,7 @@ copy_image (unsigned char* img, unsigned short scr_addr)
      */
     asm volatile (
         "cld                                                 ;"
-       	"movl $16000,%%ecx                                   ;"
+       	"movl $16000-1440,%%ecx                                   ;"
        	"rep movsb    # copy ECX bytes from M[ESI] to M[EDI]  "
       : /* no outputs */
       : "S" (img), "D" (mem_image + scr_addr) 

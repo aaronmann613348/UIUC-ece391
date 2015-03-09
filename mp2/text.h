@@ -40,11 +40,15 @@
 #define FONT_WIDTH   8
 #define FONT_HEIGHT 16
 
+#define BUFFSIZE 5760
+#define SIXTEEN 16
+#define TWOFIFYSIX 256
+
 /* Standard VGA text font. */
-extern unsigned char font_data[256][16];
+extern unsigned char font_data[TWOFIFYSIX][SIXTEEN];
 
 
-unsigned char buffer[5760]; //global buffer array 
+unsigned char buffer[BUFFSIZE]; //global buffer array 
 /*
     text to graphics image generation routine.  
     Given a string, it should produce a buffer 

@@ -618,7 +618,7 @@ void text_to_image(const char * string, unsigned char color_text, unsigned char 
 
     for(i = 0; i < string_length; i++) //current character
     {
-        for(j = 1; j < 17; j++) //each character has 16 rows (hex value entries)
+        for(j = 1; j < 18; j++) //each character has 16 rows (hex value entries)
         {
             
             bitmask = 0x80;

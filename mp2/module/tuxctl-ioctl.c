@@ -53,7 +53,7 @@ static int flag_for_spamming;
 #define debug(str, ...) \
 	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
 
-
+//local function calls
 
 //local function declarations:
 /*
@@ -70,6 +70,7 @@ int tuxctl_ioctl_tux_init (struct tty_struct* tty);
 *	low 16 bits (15:0) specify a number whos hex value is displayed on the 7 segment displays
 *	low 4 bits of the third byte (19:16) specify which LEDs should be on
 *	lwo 4 bits of the highest byte (27:24) specify whether the corresponding decimal points should be turned on
+	takes in 32 bit iteger and populates buf array and sends to puts for the appropriate led combos
 
 */
 int tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg);
@@ -88,6 +89,8 @@ int tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg);
 *	bit 2: b
 *	bit 1: a
 *	bit 0: start
+
+	converts packets into the formal given above ad then sends usig copy to user
 *
 */
 int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg);
@@ -97,6 +100,7 @@ int tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg);
 /*
  *
  *	Reset Handler
+ 	sends buf array into puts to restart the game
  */
  void tux_reset_helper(struct tty_struct* tty);
 
@@ -184,7 +188,7 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 	case TUX_BUTTONS:
 
-			if(arg == 0)/* (int*)arg == NULL OLD VERSION OF NULL CHECK */
+			if(arg == 0)//check for null
 			{
 				return -EINVAL;
 			}
@@ -232,6 +236,7 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 *	INPUTs: tty struct!***
 *	initializes vaiables associated with the driver 
 *	we'll be calling this thing first
+	send in opcodes to get started
 */
 int
 tuxctl_ioctl_tux_init(struct tty_struct* tty)
@@ -260,12 +265,16 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 *	low 4 bits of the third byte (19:16) specify which LEDs should be on
 *	lwo 4 bits of the highest byte (27:24) specify whether the corresponding decimal points should be turned on
 
-	bitmasks defined above:
-	#define BITMASK_byte 0x0F//define bitmask 00001111
-	#define BITMASK_fourbit 0xF //define bitmask 1111
-	#define BITMASK_twobyte 0x000F//define bitmask 0000 0000 0000 1111
 	
-	#define ADD_DEC 0x10//for seven segment rep.. decimal is on fourth most significant bit of seven seg representation
+*	
+*
+*	
+	takes in 32 bit iteger and populates buf array and sends to puts for the appropriate led combos
+	
+	populates buf accordig to spec in Mtcp.h so taht the first byte says the opcode
+	secodn byte gives which leds o
+	ad te following bytes give the led values taht should be displayed in seven segment
+
 
 */
 
@@ -408,7 +417,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 
 	#define FIVEMASK 0x20	//0010 0000
 	#define SIXMASK 0x40	//0100 0000
-*
+*	converts packets into the formal given above ad then sends usig copy to user
 
 */
 int
@@ -459,9 +468,11 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 	
 }
 
-
-
-
+/*
+ *
+ *	Reset Handler
+ 	sends buf array into puts to restart the game
+ */
 void tux_reset_helper(struct tty_struct * tty)
 {
 	//get ldisc_put ready for new input
