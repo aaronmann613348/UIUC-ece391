@@ -110,7 +110,7 @@ static int unveil_around_player (int play_x, int play_y);
 static void *rtc_thread(void *arg);
 static void *keyboard_thread(void *arg);
 static void *tux_thread(void *arg);
-static void tux_timer(int tux_file, int t);
+static void tux_timer(int t);
 
 
 /* 
@@ -423,7 +423,7 @@ static void *tux_thread(void *arg)
 	//we want all 4 LEDS lit and the third decimal lit all the time no matter what
 
 */
-static void tux_timer(int tux_file, int t)
+static void tux_timer( int t)
 {
 	int start;
 	int s;
@@ -614,7 +614,7 @@ static void *rtc_thread(void *arg)
 			int difference;
 			difference = (int)difftime(end_time, t);
 			//call show status to show status bar
-			tux_timer(fe, difference);
+			tux_timer(difference);
 			show_status(level, fruit, difference);//add spinlock? //also lock tux thread
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so

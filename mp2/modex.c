@@ -554,14 +554,14 @@ show_status(int level, int fruit, int t)
     seconds = t%60;
     minutes = t/60;
    
-    if(fruit >= 2 || fruit == 0)//need plural fruits in print statment
+    if(fruit == 1)//singular fruit
     {
-    sprintf(str,"Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
+    sprintf(str,"Level %d   %d Fruit   %02d:%02d" , level, fruit, minutes, seconds);
     text_to_image(str);
     }
-    else//singular fruits
+    else//need plural fruits in print statment
     {
-    sprintf(str, "Level %d   %d Fruit   %02d:%02d" , level, fruit, minutes, seconds);
+    sprintf(str, "Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
     text_to_image(str);
     }
 
@@ -871,6 +871,19 @@ draw_horiz_line (int y)
     /* Return success. */
     return 0;
 }
+
+
+int set_pallet_color(int x)
+{
+  return 0;
+}
+
+
+
+
+
+
+
 
 #endif /* !defined(TEXT_RESTORE_PROGRAM) */
 

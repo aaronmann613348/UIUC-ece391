@@ -154,5 +154,12 @@ extern int draw_horiz_line (int y);
 extern int draw_vert_line (int x);
 
 
+/*
+	Make the player glow by setting an event loop changing the players center color
+	also make the maze walls and status bar change color witht the level. 10 levels, so pick some colors
+	create floating semi transparent text
+
+*/
+extern int set_pallet_color(int x);
 
 #endif /* MODEX_H */
