@@ -590,7 +590,7 @@ unsigned char font_data[256][16] = {
     
 
 */
-void text_to_image(const char * string)
+void text_to_image(const char * string, unsigned char color_text, unsigned char color_back)
 {
 
 
@@ -602,9 +602,10 @@ void text_to_image(const char * string)
     int bitmask;//used for assigning color
     int buffer_color;
 
+
     bitmask = 0x80;
-    color = rand()%50; //random number it doesn't really matter (blue)
-    buffer_color = rand()%50;
+    color = color_text; //random number it doesn't really matter (blue)
+    buffer_color = color_back;
     string_length = strlen(string);//function in string.h
     starting_index = (320 -(string_length*8))/2; //we need to center it
 

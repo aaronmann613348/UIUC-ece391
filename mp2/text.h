@@ -69,5 +69,5 @@ unsigned char buffer[5760]; //global buffer array
 
 */
 
-void text_to_image(const char * string);
+void text_to_image(const char * string, unsigned char color, unsigned char color_back);
 #endif /* TEXT_H */

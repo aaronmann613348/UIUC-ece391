@@ -611,7 +611,8 @@ static void *rtc_thread(void *arg)
 		int r_center;
 		int g_center;
 		int b_center;
-
+		int random_color1;
+		int random_color2;
 
 		r_fill = rand()%50;
 		g_fill = rand()%50;
@@ -620,6 +621,8 @@ static void *rtc_thread(void *arg)
 		b_outline = rand()%50;
 		g_outline = rand()%50;
 		
+		random_color1 = rand()%50;
+		random_color2 = rand()%50;
 
 		set_pallet_color(WALL_FILL_COLOR, r_fill, g_fill, b_fill);
 		set_pallet_color(WALL_OUTLINE_COLOR, r_outline, g_outline, b_outline);
@@ -638,6 +641,7 @@ static void *rtc_thread(void *arg)
 			// Wait for Periodic Interrupt
 			ret = read(fd, &data, sizeof(unsigned long));
 			int fruit;//define a variable fruit
+			
 			fruit = return_n_fruits();//call function in maze.c to get number of remaining fruits
 			//used functions in <time.h> include for this
 			time(&end_time);
@@ -645,7 +649,10 @@ static void *rtc_thread(void *arg)
 			difference = (int)difftime(end_time, t);
 			//call show status to show status bar
 			tux_timer(difference);
-			show_status(level, fruit, difference);//add spinlock? //also lock tux thread
+			
+
+			
+			show_status(level, fruit, difference, random_color1, random_color2);//add spinlock? //also lock tux thread
 			set_pallet_color(PLAYER_CENTER_COLOR, r_center, g_center, b_center);
 			r_center = rand()%50;
 			g_center = rand()%50;

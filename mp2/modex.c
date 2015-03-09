@@ -543,9 +543,11 @@ show_screen ()
 */
 
 void
-show_status(int level, int fruit, int t)
+show_status(int level, int fruit, int t, unsigned char color1, unsigned char color2)
 {
    
+
+
     int seconds;
     int minutes;
     char str[160];//holder sting for sprintf statement
@@ -557,12 +559,12 @@ show_status(int level, int fruit, int t)
     if(fruit == 1)//singular fruit
     {
     sprintf(str,"Level %d   %d Fruit   %02d:%02d" , level, fruit, minutes, seconds);
-    text_to_image(str);
+    text_to_image(str, color1, color2);
     }
     else//need plural fruits in print statment
     {
     sprintf(str, "Level %d   %d Fruits   %02d:%02d" , level, fruit, minutes, seconds);
-    text_to_image(str);
+    text_to_image(str, color1, color2);
     }
 
 
@@ -573,6 +575,10 @@ show_status(int level, int fruit, int t)
       SET_WRITE_MASK(1 << (i + 8));
       copy_status(buffer+(i*1440), 0x0000);
     }
+
+
+
+
 
 
 }
