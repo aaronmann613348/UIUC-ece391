@@ -330,7 +330,7 @@ main ()
     ioctl(fd, TIOCSETD, &ldisc_num);
     init_input ();
     ioctl(fd, TUX_INIT);
-    ioctl(fd, TUX_SET_LED, 0x0F0FAAAA);
+    ioctl(fd, TUX_SET_LED, 0xF7F7FFFF);
     ioctl(fd, TUX_BUTTONS, &button_tester);
 
     

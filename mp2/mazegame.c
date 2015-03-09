@@ -110,6 +110,7 @@ static int unveil_around_player (int play_x, int play_y);
 static void *rtc_thread(void *arg);
 static void *keyboard_thread(void *arg);
 static void *tux_thread(void *arg);
+static void tux_timer(int tux_file, int t);
 
 
 /* 
@@ -373,7 +374,7 @@ static void *tux_thread(void *arg)
 	while (winner == 0)
 	{		
 		
-		
+		ioctl(fe, TUX_BUTTONS, &button);
 		if(quit_flag == 1 || winner ==1) 
 		{
 
@@ -391,10 +392,10 @@ static void *tux_thread(void *arg)
 						next_dir = DIR_DOWN;
 						break;
 					case 0x40:
-						next_dir = DIR_RIGHT;
+						next_dir = DIR_LEFT;
 						break;
 					case 0x80:
-						next_dir = DIR_LEFT;
+						next_dir = DIR_RIGHT;
 						break;
 					default:
 						break;
@@ -404,6 +405,54 @@ static void *tux_thread(void *arg)
 	}
 
 	return 0;
+}
+
+/*INPUT:
+
+	s is seconds
+	m is minutes
+	//we want all 4 LEDS lit and the third decimal lit all the time no matter what
+
+*/
+static void tux_timer(int tux_file, int t)
+{
+	int start;
+	int s;
+	int m;
+	s = t %60;//seconds
+	m = t/60;//minutes
+	
+
+	if(m >= 10)
+	{
+		start = 0x040F0000;//initializes 0000 0100 0000 1111 0000 0000 0000 0000
+		//light up all leds
+	}
+	else
+	{
+		start = 0x04070000;//initializes 0000 0100 0000 1111 0000 0000 0000 0000
+		//light up all leds
+	}
+
+	
+	
+
+	//populate LED0
+	start |= (s %10);
+	 s /= 10;
+	//now LED1 (shift over 4 places)
+	start |=  ((s%10) << 4);
+
+	//now LED2
+	start |= ((m %10)<<8);
+
+	m /= 10;
+	//finally LED3
+	start |= ((m%10) << 12);
+
+	//send in start to the tux!!!!
+	ioctl(fe, TUX_SET_LED, start);
+
 }
 
 
@@ -488,13 +537,17 @@ static int total = 0;
  */
 static void *rtc_thread(void *arg)
 {
+
+
+
+
 	int ticks = 0;
 	int level;
 	int ret;
 	int open[NUM_DIRS];
 	int need_redraw = 0;
 	int goto_next_level = 0;
-
+	
 
 	// Loop over levels until a level is lost or quit.
 	for (level = 1; (level <= MAX_LEVEL) && (quit_flag == 0); level++)
@@ -552,6 +605,7 @@ static void *rtc_thread(void *arg)
 			int difference;
 			difference = (int)difftime(end_time, t);
 			//call show status to show status bar
+			tux_timer(fe, difference);
 			show_status(level, fruit, difference);//add spinlock? //also lock tux thread
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so
@@ -714,8 +768,8 @@ int main()
 	ldisc_num = N_MOUSE;
 	ioctl(fe, TIOCSETD, &ldisc_num);
 	ioctl(fe, TUX_INIT);
-	ioctl(fe, TUX_SET_LED);
-	ioctl(fe, TUX_BUTTONS);
+	//ioctl(fe, TUX_SET_LED, );
+	
 
 
 	// Initialize Keyboard
