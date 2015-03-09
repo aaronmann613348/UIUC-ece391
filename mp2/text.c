@@ -608,7 +608,7 @@ void text_to_image(const char * string)
 
     for(i = 0; i < 5760 ; i++) //buffer size = (16+2) *320 = 5760
     {
-        buffer[i] = 0x00;//random color to fill background with (green)
+        buffer[i] = 0x01;//random color to fill background with ()
     }
 
 

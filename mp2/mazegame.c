@@ -375,27 +375,36 @@ static void *tux_thread(void *arg)
 	{		
 		
 		ioctl(fe, TUX_BUTTONS, &button);
+		button = button & 0xFF;
+		if(button == 0xFE)
+		{
+			quit_flag = 1;
+
+		}
+
 		if(quit_flag == 1 || winner ==1) 
 		{
 
-			return 0; //game over
+			break; //game over
 		}
-
+				//ACTIVE LOW ..so we want the opposite
 				//ioctl(fd, TUX_BUTTONS, &button);//get TUX INPUT
 				pthread_mutex_lock(&mtx);
 				switch(button)
 				{
-					case 0x10:
+					case 0xEF:
 						next_dir = DIR_UP;
 						break;
-					case 0x20:
+					case 0xDF:
 						next_dir = DIR_DOWN;
 						break;
-					case 0x40:
+					case 0xBF:
 						next_dir = DIR_LEFT;
 						break;
-					case 0x80:
+					case 0x7F:
 						next_dir = DIR_RIGHT;
+						break;
+					case 0xFE://start button hit.. oth bit
 						break;
 					default:
 						break;
