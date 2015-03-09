@@ -454,6 +454,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 	
 	//send it up!
 	(void)copy_to_user((int*)arg, &holder, sizeof(holder));
+	return 0;
 	
 	
 }
