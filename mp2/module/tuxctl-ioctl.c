@@ -28,13 +28,18 @@
 
 
 
-static unsigned char * array;//global array to read stuff in for buttons
+static unsigned char array[2];//global array to read stuff in for buttons
 
 
-static int reset;//handy reset flag
+
 static int flag_for_spamming;
 
-static unsigned long buttons;
+static long  buttons;
+
+
+#define FIVEMASK 0x20
+#define SIXMASK 0x40
+#define FIVESIXMASK 0x9F
 
 #define BITMASK_byte 0x0F//define bitmask 00001111
 #define BITMASK_fourbit 0xF //define bitmask 1111
@@ -46,7 +51,7 @@ static unsigned long buttons;
 
 
 #define debug(str, ...) \
-	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__);
+	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
 
 
 
@@ -143,7 +148,10 @@ void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
     }
 
 
-    /*printk("packet : %x %x %x\n", a, b, c); */
+    printk("packet : %x %x %x\n", a, b, c); 
+    printk("b which is array[0] is : %x \n", array[0]);
+    printk("c which is array[1] is : %x \n", array[1]);
+
 }
 
 /******** IMPORTANT NOTE: READ THIS BEFORE IMPLEMENTING THE IOCTLS ************
@@ -168,11 +176,14 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 	case TUX_INIT:
 
-			return tuxctl_ioctl_tux_init(tty);
+			flag_for_spamming = 0;
+			tuxctl_ioctl_tux_init(tty);
+			return 0;
 			
 
 
 	case TUX_BUTTONS:
+
 			if(access_ok(%VERIFY_WRITE, (int*)arg, 4 ))/* (int*)arg == NULL OLD VERSION OF NULL CHECK */
 			{
 				return -EINVAL;
@@ -200,17 +211,17 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 
 			//don't need to implement
-			return 0;
+			//return 0;
 
 	case TUX_LED_REQUEST:
 
 			//dont need to implement
-			return 0;
+			//return 0;
 
 	case TUX_READ_LED:
 
 			//don't need to implement
-			return 0;
+			//return 0;
 
 	default:
 	    return -EINVAL;
@@ -226,7 +237,7 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 {
 	
 	char buf[2];
-	reset = 0;
+	
 	buttons = 0;
 	flag_for_spamming = 0;
 
@@ -239,7 +250,8 @@ tuxctl_ioctl_tux_init(struct tty_struct* tty)
 	
 	tuxctl_ldisc_put(tty, buf, 2);//send this up to tux
 	//printk("check initialized\n");
-	return 0;
+	return 0; 
+	
 
 }
 /*	INPUT: 32 bit integer
@@ -356,68 +368,70 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 *	
 *	INPUT: struct tty_struct * tty, unsigned long arg
 *
+* 	static unsigned long buttons;
+* 	static unsigned char * array; //global array to read stuff in for buttons
+*	void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
+*   unsigned  a, b, c;
 *
+*   a = packet[0];  Avoid printk() sign extending the 8-bit 
 *
+* 	 b = packet[1];  values when printing them. 
+*   c = packet[2];
+
+	#define FIVEMASK 0x20	//0010 0000
+	#define SIXMASK 0x40	//0100 0000
 *
+
 */
 int
 tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 {
-	int i;
-	int bitmask;
-	char holder[8];
-	char temp;
+	
 
-	unsigned long temp1;//holder for C B A S
-	unsigned long temp2;//holder for R L D U
+	int holder; //holds the 8 bits we need to send up
 
-	temp1 = array[0]; // X X X X C B A S ---> C B A S
-	temp2 = array[1]; // X X X X R D L U ---> R D L U
-	temp1 = (temp1 & 0x0F);//C B A S
-	temp2 = (temp2 & 0x0F);//R D L U
+	unsigned char temp1;//holder for C B A S
+	unsigned char temp2;//holder for R L D U
+	unsigned char bit5;
+	unsigned char bit6;
+	
+
+	
+	temp1 = array[0]; // X X X X C B A S
+	temp2 = array[1]; // X X X X R D L U
+	
+
+	//populate holder
+	holder = (temp1 & 0xF);
+	//now add the bits of the second array to the high 4 bits of holder
+	holder |= ((temp2 & 0xF) << 4);
+	//holder now has R D L U C B A S (kernel)
+
+	//now we want R L D U C B A S (user)
+
+	bit5 = (holder & FIVEMASK); //and with bitmask 0x0010 0000
+	bit6 = (holder & SIXMASK); //and with bitmask 0x0100 0000
+
+	//clear 5th and 6th bits of holder
+	holder &= FIVESIXMASK; //  and with bitmask 0x1001 1111
+
+	bit5 = bit5 << 1;
+	bit6 = bit6 >> 1;
+
+	holder |=  bit5;
+	holder |=  bit6;
+	printk("holder is : %x \n", holder);
 
 
-	bitmask = 0x1; // 0001
-
-
-	//need to flip D and L in array 1
-	//then, combine array[1] and array[0] and store in buff
-	//so that buff[0] = R L D U C B A S
-
-	//put the stuff we want in a holder
-	for(i = 0; i < 4 ; i ++)
-	{
-		holder[i] = (temp2 & bitmask);
-		bitmask = bitmask << 1;
-	}
-	//flip the L and the D!
-	temp = holder[2];
-	holder[2] = holder[1];
-	holder[1] = temp;
-
-
-	//now fill in the other 8 bits of holder with C B A S 
-	for(i = 4; i < 8; i++)
-	{
-		holder[i] = (temp1 & bitmask);
-		bitmask = bitmask >> 1;
-	}
-
-	buttons = (unsigned long)holder;
-
+	//send this thing up!
+	buttons = (long)holder;
 
 	copy_to_user((long*)arg, &buttons, sizeof(long));
-	
 	
 }
 
 
 
-/* WE NEED TO HANDLE RESETS ALRIGHT YEAH!!!!!
-*
-*
-*
-*/
 
 void tux_reset_helper(struct tty_struct * tty)
 {
@@ -425,7 +439,6 @@ void tux_reset_helper(struct tty_struct * tty)
 	char buf[2];
 	buf[0] = MTCP_BIOC_ON;
 	buf[1] = MTCP_LED_USR;
-	reset = 1;//set reset flag
 	tuxctl_ldisc_put(tty, buf, 2);//send it up!
 
 	return;

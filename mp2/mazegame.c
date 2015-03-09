@@ -552,7 +552,7 @@ static void *rtc_thread(void *arg)
 			int difference;
 			difference = (int)difftime(end_time, t);
 			//call show status to show status bar
-			show_status(level, fruit, difference);
+			show_status(level, fruit, difference);//add spinlock? //also lock tux thread
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so
 			// that player velocity is smooth
@@ -713,7 +713,9 @@ int main()
 	fe = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
 	ldisc_num = N_MOUSE;
 	ioctl(fe, TIOCSETD, &ldisc_num);
-	ioctl(fe, TUX_INIT, 0x00000000);
+	ioctl(fe, TUX_INIT);
+	ioctl(fe, TUX_SET_LED);
+	ioctl(fe, TUX_BUTTONS);
 
 
 	// Initialize Keyboard

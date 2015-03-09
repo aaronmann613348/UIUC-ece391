@@ -69,7 +69,7 @@
 static struct termios tio_orig;
 
 int fd;
-int button_tester;
+static int button_tester;
 
 
 
@@ -228,7 +228,7 @@ get_command (dir_t cur_dir)
                 case 0x02: //a
                     pushed = DIR_STOP;
                     prev_cur = DIR_STOP;
-                    printf(" you pushed the ASS button\n");
+                    printf(" you pushed the A button\n");
                     break;
 
                 case 0x01: //start
@@ -330,8 +330,7 @@ main ()
     ioctl(fd, TIOCSETD, &ldisc_num);
     init_input ();
     ioctl(fd, TUX_INIT);
-    ioctl(fd, TUX_SET_LED, 0x000FF0e0);
-
+    ioctl(fd, TUX_SET_LED, 0x0F0FAAAA);
     ioctl(fd, TUX_BUTTONS, &button_tester);
 
     
