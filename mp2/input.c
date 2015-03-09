@@ -69,6 +69,7 @@
 static struct termios tio_orig;
 
 int fd;
+int button_tester;
 
 
 
@@ -190,6 +191,67 @@ get_command (dir_t cur_dir)
     }
 
 
+/* TEST FOR BUTTONS*/
+    //if(USE_TUX_CONTROLLER)
+    {
+        if(USE_TUX_CONTROLLER == 1)
+        {   
+            switch(button_tester)
+            {
+                case 0x80: //right
+                    pushed = DIR_RIGHT;
+                    break;
+
+                case 0x40: //left
+                    pushed  = DIR_LEFT;
+                    break;
+                case 0x20: //down
+                    pushed = DIR_DOWN;
+                    break;
+
+                case 0x10: // up
+                    pushed = DIR_UP;
+                    break;
+
+                case 0x08: //c
+                    pushed = DIR_STOP;
+                    prev_cur = DIR_STOP;
+                    printf(" you pushed the C button\n");
+                    break;
+
+                case 0x04: //b
+                    pushed = DIR_STOP;
+                    prev_cur = DIR_STOP;
+                    printf(" you pushed the B button\n");
+                    break;
+
+                case 0x02: //a
+                    pushed = DIR_STOP;
+                    prev_cur = DIR_STOP;
+                    printf(" you pushed the ASS button\n");
+                    break;
+
+                case 0x01: //start
+                    pushed = DIR_STOP;
+                    prev_cur = DIR_STOP;
+                    printf(" you pushed the S button\n");
+                    break;
+
+                default: 
+                    pushed = DIR_STOP;
+                    break;
+
+            }
+
+
+        }
+    }
+
+
+    /* END TEST FOR BUTTONS*/
+
+
+
     /*
      * Once a direction is pushed, that command remains active
      * until a turn is taken.
@@ -249,6 +311,7 @@ main ()
 
     cmd_t cmd;
     dir_t dir = DIR_UP;
+  
     static const char* const cmd_name[NUM_TURNS] = {
         "none", "right", "back", "left"
     };
@@ -267,7 +330,11 @@ main ()
     ioctl(fd, TIOCSETD, &ldisc_num);
     init_input ();
     ioctl(fd, TUX_INIT);
-    ioctl(fd, TUX_SET_LED, 0x030FABEF);
+    ioctl(fd, TUX_SET_LED, 0x000FF0e0);
+
+    ioctl(fd, TUX_BUTTONS, &button_tester);
+
+    
 
 
     while (1) {
@@ -286,7 +353,5 @@ main ()
 
 }
 #endif
-
-
 
 

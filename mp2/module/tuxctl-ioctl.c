@@ -117,7 +117,7 @@ void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
     switch(a)
     {
     	case MTCP_ACK:
-    		printk("check initialized");
+    		//printk("check initialized");
     		flag_for_spamming = 0;
     		break;
 
@@ -127,8 +127,6 @@ void tuxctl_handle_packet(struct tty_struct* tty, unsigned char* packet)
 			array[1] = c;
 
 			
-
-
 
     		break;
 
@@ -175,13 +173,14 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 
 
 	case TUX_BUTTONS:
-			if((int*)arg == NULL)
+			if(access_ok(%VERIFY_WRITE, (int*)arg, 4 ))/* (int*)arg == NULL OLD VERSION OF NULL CHECK */
 			{
 				return -EINVAL;
 			}
 	
 
-			return tuxctl_ioctl_tux_buttons(tty, arg);
+			tuxctl_ioctl_tux_buttons(tty, arg);
+			return 0;
 			
 
 	case TUX_SET_LED: 
@@ -189,7 +188,9 @@ tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 			if(flag_for_spamming == 0)
 			{
 				flag_for_spamming = 1;
-				return tuxctl_ioctl_tux_set_led(tty, arg);
+				 
+				tuxctl_ioctl_tux_set_led(tty, arg);
+				
 			}
 
 			return 0;
@@ -262,7 +263,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 
 	
 	unsigned char buf[6];// 6 bytes; what we'll be sending to the TUX
-	int seven_seg[16] = {0xE7, 0x06,  0xCB, 0x8F, 0x28, 0xAD, 0xED, 0x86, 0xEF, 0xAE, 0xEE, 0xEF, 0xE1, 0xE7, 0xE9, 0xEA};
+	int seven_seg[16] = {0xE7, 0x06,  0xCB, 0x8F, 0x2E, 0xAD, 0xED, 0x86, 0xEF, 0xAE, 0xEE, 0x6D, 0xE1, 0x4F, 0xE9, 0xE8};
 	//holds opcode, which LEDS, and 4 hex values to be shown by LEDS
 
 	int LED_values[4]; // 4 bytes to hold the LED hex values we want
@@ -287,6 +288,7 @@ tuxctl_ioctl_tux_set_led(struct tty_struct* tty, unsigned long arg)
 	my_arg = arg;
 
 	decimals_on = ((my_arg >> 24) & BITMASK_byte);//first get a binary representation of which decimals are on using bitmask
+	printk("decimals_on is %x \n", decimals_on);
 
 	//shift over 16 to check which LEDS on using bitmask  0000 1111
 	buf[1] = (BITMASK_byte & my_arg >> 16);//send these 8 bits to the second 'argument' of MTCP_LED_SET
@@ -382,7 +384,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 	//then, combine array[1] and array[0] and store in buff
 	//so that buff[0] = R L D U C B A S
 
-	//make the flip
+	//put the stuff we want in a holder
 	for(i = 0; i < 4 ; i ++)
 	{
 		holder[i] = (temp2 & bitmask);
@@ -392,6 +394,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 	temp = holder[2];
 	holder[2] = holder[1];
 	holder[1] = temp;
+
 
 	//now fill in the other 8 bits of holder with C B A S 
 	for(i = 4; i < 8; i++)
@@ -405,7 +408,7 @@ tuxctl_ioctl_tux_buttons(struct tty_struct* tty, unsigned long arg)
 
 	copy_to_user((long*)arg, &buttons, sizeof(long));
 	
-	return 0;
+	
 }
 
 
