@@ -160,6 +160,6 @@ extern int draw_vert_line (int x);
 	create floating semi transparent text
 
 */
-extern int set_pallet_color(int x);
+extern void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b);
 
 #endif /* MODEX_H */

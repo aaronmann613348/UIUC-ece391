@@ -594,6 +594,36 @@ static void *rtc_thread(void *arg)
 		show_screen();
 		draw_full_block (old_x, old_y, background_formask);//old values are stored for play_x and play_y
 		
+		//VGA MANIPULATIONS:
+		//getting color input from blocks.h
+/*
+		#define PLAYER_CENTER_COLOR 0x20
+		#define WALL_OUTLINE_COLOR  0x21
+		#define WALL_FILL_COLOR     0x22
+
+*/
+		int r_fill;
+		int g_fill;
+		int b_fill;
+		int r_outline;
+		int b_outline;
+		int g_outline;
+		int r_center;
+		int g_center;
+		int b_center;
+
+
+		r_fill = rand()%50;
+		g_fill = rand()%50;
+		b_fill = rand()%50;
+		r_outline = rand()%50;
+		b_outline = rand()%50;
+		g_outline = rand()%50;
+		
+
+		set_pallet_color(WALL_FILL_COLOR, r_fill, g_fill, b_fill);
+		set_pallet_color(WALL_OUTLINE_COLOR, r_outline, g_outline, b_outline);
+
 		
 
 		//calculate time!
@@ -616,6 +646,11 @@ static void *rtc_thread(void *arg)
 			//call show status to show status bar
 			tux_timer(difference);
 			show_status(level, fruit, difference);//add spinlock? //also lock tux thread
+			set_pallet_color(PLAYER_CENTER_COLOR, r_center, g_center, b_center);
+			r_center = rand()%50;
+			g_center = rand()%50;
+			b_center = rand()%50;
+
 			// Update tick to keep track of time.  If we missed some
 			// interrupts we want to update the player multiple times so
 			// that player velocity is smooth

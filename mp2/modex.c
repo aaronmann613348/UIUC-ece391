@@ -872,10 +872,21 @@ draw_horiz_line (int y)
     return 0;
 }
 
+/*
+  Make the player glow by setting an event loop changing the players center color
+  also make the maze walls and status bar change color witht the level. 10 levels, so pick some colors
+  create floating semi transparent text
 
-int set_pallet_color(int x)
+*/
+extern void set_pallet_color(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-  return 0;
+  OUTB(0x3C6, 0xFF);
+  OUTB(0x3C8, color);
+  OUTB(0x3C9, r);
+  OUTB(0x3C9, g);
+  OUTB(0x3C9, b);
+
+
 }
 
 
